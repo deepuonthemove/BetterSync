@@ -45,7 +45,7 @@ async function getSpotifyAccessToken(userId: string): Promise<string | null> {
       ssl: process.env.DATABASE_URL.includes("supabase.co") ? { rejectUnauthorized: false } : undefined,
     });
     try {
-      const res = await pool.query('SELECT "accessToken" FROM account WHERE "userId" = $1 AND provider = $2', [userId, "spotify"]);
+      const res = await pool.query('SELECT "accessToken" FROM account WHERE "userId" = $1 AND "providerId" = $2', [userId, "spotify"]);
       if (res.rows.length > 0) {
         token = res.rows[0].accessToken;
       }
@@ -60,7 +60,7 @@ async function getSpotifyAccessToken(userId: string): Promise<string | null> {
     const Database = require("better-sqlite3");
     const db = new Database("sqlite.db");
     try {
-      const stmt = db.prepare("SELECT accessToken FROM account WHERE userId = ? AND provider = ?");
+      const stmt = db.prepare("SELECT accessToken FROM account WHERE userId = ? AND providerId = ?");
       const row = stmt.get(userId, "spotify") as { accessToken: string } | undefined;
       if (row) {
         token = row.accessToken;

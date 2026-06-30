@@ -24,8 +24,8 @@ export async function GET() {
         connectionString: process.env.DATABASE_URL,
         ssl: process.env.DATABASE_URL.includes("supabase.co") ? { rejectUnauthorized: false } : undefined,
       });
-      const res = await pool.query('SELECT provider FROM account WHERE "userId" = $1', [userId]);
-      providers = res.rows.map((r: any) => r.provider);
+      const res = await pool.query('SELECT "providerId" FROM account WHERE "userId" = $1', [userId]);
+      providers = res.rows.map((r: any) => r.providerId);
       await pool.end();
     } else {
       // Connect to local SQLite fallback database - loaded dynamically
@@ -35,9 +35,9 @@ export async function GET() {
       const Database = require("better-sqlite3");
       const db = new Database("sqlite.db");
       try {
-        const stmt = db.prepare("SELECT provider FROM account WHERE userId = ?");
-        const rows = stmt.all(userId) as { provider: string }[];
-        providers = rows.map((r) => r.provider);
+        const stmt = db.prepare("SELECT providerId FROM account WHERE userId = ?");
+        const rows = stmt.all(userId) as { providerId: string }[];
+        providers = rows.map((r) => r.providerId);
       } catch (e) {
         // Table account might not exist if Better Auth has not initialized yet
         providers = [];
