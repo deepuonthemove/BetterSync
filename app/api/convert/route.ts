@@ -327,18 +327,8 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // 1. Fetch current Spotify User ID
-        const meRes = await fetch("https://api.spotify.com/v1/me", {
-          headers: { Authorization: `Bearer ${spotifyToken}` }
-        });
-        if (!meRes.ok) {
-          throw new Error("Spotify authorization has expired. Please re-authenticate your Spotify connection.");
-        }
-        const meData = await meRes.json();
-        const spotifyUserId = meData.id;
-
-        // 2. Create the target Spotify playlist
-        const createPlaylistRes = await fetch(`https://api.spotify.com/v1/users/${spotifyUserId}/playlists`, {
+        // 1. Create the target Spotify playlist using the direct /me/playlists endpoint
+        const createPlaylistRes = await fetch("https://api.spotify.com/v1/me/playlists", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${spotifyToken}`,
