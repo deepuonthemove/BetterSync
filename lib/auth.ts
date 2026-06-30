@@ -46,6 +46,11 @@ export const auth = betterAuth({
       clientId: process.env.SPOTIFY_CLIENT_ID || "placeholder_spotify_id",
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET || "placeholder_spotify_secret",
       scope: ["playlist-modify-public", "playlist-modify-private", "user-read-private"],
+      authorization: {
+        params: {
+          show_dialog: "true"
+        }
+      }
     },
   },
 });
