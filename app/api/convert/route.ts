@@ -386,7 +386,7 @@ export async function POST(request: NextRequest) {
 
         // 4. Add the matched URIs into the new Spotify playlist
         if (matchedUris.length > 0) {
-          const addRes = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+          const addRes = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items`, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${spotifyToken}`,
