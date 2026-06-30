@@ -95,6 +95,7 @@ export default function ConverterClient() {
   } | null>(null);
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
   const [activePlaylistUrl, setActivePlaylistUrl] = useState<string | null>(null);
+  const [showUpiModal, setShowUpiModal] = useState(false);
 
   // Toast Notification HUD State
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "info" }[]>([]);
@@ -458,7 +459,7 @@ export default function ConverterClient() {
           <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
             <a href="#workspace" style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>Workspace</a>
             <a href="#features" style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>Features</a>
-            <a href="#pricing" style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>Pricing</a>
+            <a href="#pricing" style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>Donate</a>
             
             <span className="badge badge-interactive" style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
               <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent-violet)" }}></span>
@@ -467,7 +468,7 @@ export default function ConverterClient() {
           </div>
         </div>
       </header>
-
+ 
       {/* Main Container */}
       <main>
         {/* Hero Section */}
@@ -499,7 +500,7 @@ export default function ConverterClient() {
               <ArrowRight size={16} />
             </a>
             <a href="#pricing" className="btn btn-secondary">
-              Upgrade
+              Support Project
             </a>
           </div>
         </section>
@@ -988,102 +989,161 @@ export default function ConverterClient() {
           </div>
         </section>
 
-        {/* Pricing Section */}
+        {/* Support & Donations Section (Buy Me a Coffee) */}
         <section id="pricing" style={{ marginBottom: "6rem", scrollMarginTop: "100px" }}>
           <div style={{ textAlign: "center", marginBottom: "3rem" }}>
-            <h2 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>Simple, Fair Pricing</h2>
-            <p style={{ color: "var(--text-secondary)" }}>Choose the scope that suits your library size</p>
+            <h2 style={{ fontSize: "2.25rem", marginBottom: "0.75rem", fontWeight: 800, letterSpacing: "-0.03em" }}>Support BetterSync</h2>
+            <p style={{ color: "var(--text-secondary)", maxWidth: "600px", margin: "0 auto", fontSize: "1rem", lineHeight: 1.6 }}>
+              BetterSync is 100% free and open-source. If it helped you sync your playlists and saved you time, consider supporting the developer by buying a coffee!
+            </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "2rem", maxWidth: "1100px", margin: "0 auto" }}>
-            
-            {/* Card 1: Free */}
-            <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <h3 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem" }}>Free Sandbox</h3>
-                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "1.5rem" }}>Test drive the pipeline</p>
-                <div style={{ marginBottom: "1.5rem" }}>
-                  <span style={{ fontSize: "2.5rem", fontWeight: 800 }}>$0</span>
-                  <span style={{ color: "var(--text-muted)" }}>/forever</span>
-                </div>
-                
-                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "2rem" }}>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> Max 5 tracks per transfer</li>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> Single playlist transfers</li>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> Basic YouTube URL matching</li>
-                </ul>
-              </div>
-              
-              <button onClick={() => addToast("Current Sandbox active.", "info")} className="btn btn-secondary" style={{ width: "100%" }}>
-                Current Plan
-              </button>
-            </div>
-
-            {/* Card 2: 30-Days Access */}
-            <div className="card card-glow" style={{ 
-              display: "flex", 
-              flexDirection: "column", 
-              justifyContent: "space-between",
-              border: "1px solid rgba(139, 92, 246, 0.4)",
-              boxShadow: "0 0 30px rgba(139, 92, 246, 0.08)"
-            }}>
-              <span className="badge badge-interactive" style={{ position: "absolute", top: "1rem", right: "1rem" }}>Most Popular</span>
-              <div>
-                <h3 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem" }}>30-Days Full Access</h3>
-                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "1.5rem" }}>One-time payment unlock</p>
-                <div style={{ marginBottom: "1.5rem" }}>
-                  <span style={{ fontSize: "2.5rem", fontWeight: 800 }}>$11.99</span>
-                  <span style={{ color: "var(--text-muted)" }}>/one-time</span>
-                </div>
-
-                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "2rem" }}>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> <strong>Unlimited transfers</strong> — no video cap</li>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> <strong>Multiple parallel transfers</strong></li>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> <strong>Background processing</strong></li>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> Radio & Mix stream transfers</li>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> 30 days full premium access</li>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> 7-day money-back guarantee</li>
-                </ul>
-              </div>
-
-              <button 
-                onClick={() => addToast("Redirecting to checkout panel...", "info")}
-                className="btn btn-glow" 
-                style={{ width: "100%" }}
-              >
-                Unlock Pro Access
-              </button>
-            </div>
-
-            {/* Card 3: Lifetime Pass */}
-            <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <h3 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem" }}>Lifetime Pass</h3>
-                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "1.5rem" }}>Permanent developer license</p>
-                <div style={{ marginBottom: "1.5rem" }}>
-                  <span style={{ fontSize: "2.5rem", fontWeight: 800 }}>$29.99</span>
-                  <span style={{ color: "var(--text-muted)" }}>/lifetime</span>
-                </div>
-
-                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "2rem" }}>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> <strong>Everything in 30-Days Plan</strong></li>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> Permanent access, no expiration</li>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> Future platform integration updates</li>
-                  <li style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}><Check size={16} className="text-spotify-green" /> Priority developer support line</li>
-                </ul>
-              </div>
-
-              <button 
-                onClick={() => addToast("Redirecting to licensing options...", "info")}
-                className="btn btn-secondary" 
-                style={{ width: "100%" }}
-              >
-                Purchase Lifetime License
-              </button>
+          <div className="card card-glow animate-fade" style={{ 
+            maxWidth: "600px", 
+            margin: "0 auto", 
+            padding: "2.5rem 2rem", 
+            textAlign: "center",
+            background: "rgba(9, 9, 11, 0.6)",
+            border: "1px solid var(--border-color)",
+            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.2)"
+          }}>
+            <div style={{ display: "inline-flex", background: "rgba(139, 92, 246, 0.1)", padding: "1rem", borderRadius: "50%", marginBottom: "1.5rem" }}>
+              <span style={{ fontSize: "2.5rem", lineHeight: 1 }}>☕</span>
             </div>
             
+            <h3 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "0.5rem" }}>Buy Me a Coffee</h3>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "2rem" }}>
+              Secure payment supported globally via Stripe or instantly in India via Google Pay / UPI.
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+              {/* Stripe */}
+              <a 
+                href={process.env.NEXT_PUBLIC_STRIPE_COFFEE_URL || "https://buy.stripe.com/7sIbKB2e1fXk0eY4gg"} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="btn btn-glow"
+                style={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  alignItems: "center", 
+                  padding: "1.25rem", 
+                  height: "auto", 
+                  gap: "0.5rem",
+                  textDecoration: "none",
+                  borderRadius: "12px",
+                  background: "var(--accent-gradient)"
+                }}
+              >
+                <span style={{ fontSize: "1.5rem" }}>💳</span>
+                <span style={{ fontWeight: 600 }}>Pay with Stripe</span>
+                <span style={{ fontSize: "0.75rem", opacity: 0.8, fontWeight: 400 }}>Credit Card / Apple Pay</span>
+              </a>
+
+              {/* UPI */}
+              <button 
+                onClick={() => setShowUpiModal(true)}
+                className="btn btn-secondary"
+                style={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  alignItems: "center", 
+                  padding: "1.25rem", 
+                  height: "auto", 
+                  gap: "0.5rem",
+                  borderRadius: "12px",
+                  border: "1px solid var(--border-color)",
+                  background: "rgba(255,255,255,0.01)"
+                }}
+              >
+                <span style={{ fontSize: "1.5rem" }}>🇮🇳</span>
+                <span style={{ fontWeight: 600 }}>Google Pay / UPI</span>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 400 }}>Scan QR or Pay Direct</span>
+              </button>
+            </div>
           </div>
         </section>
+
+        {/* UPI QR Code Modal Overlay */}
+        {showUpiModal && (
+          <div style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.85)",
+            backdropFilter: "blur(12px)",
+            padding: "1rem"
+          }}>
+            <div className="card card-glow animate-fade" style={{
+              maxWidth: "400px",
+              width: "100%",
+              textAlign: "center",
+              padding: "2.5rem 2rem",
+              position: "relative",
+              background: "#08080c",
+              border: "1px solid var(--border-color)",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.8)"
+            }}>
+              <button 
+                onClick={() => setShowUpiModal(false)}
+                style={{
+                  position: "absolute",
+                  top: "1rem",
+                  right: "1rem",
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  fontSize: "1.5rem",
+                  lineHeight: 1
+                }}
+              >
+                ✕
+              </button>
+
+              <div style={{ display: "inline-flex", background: "rgba(29, 185, 84, 0.1)", padding: "0.75rem", borderRadius: "50%", marginBottom: "1rem" }}>
+                <span style={{ fontSize: "1.75rem", lineHeight: 1 }}>⚡</span>
+              </div>
+
+              <h3 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem" }}>Scan & Pay via UPI</h3>
+              <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "1.5rem", lineHeight: 1.4 }}>
+                Scan this QR code with Google Pay, PhonePe, Paytm, or BHIM to send support.
+              </p>
+
+              <div style={{
+                background: "white",
+                padding: "1rem",
+                borderRadius: "12px",
+                display: "inline-block",
+                marginBottom: "1rem",
+                boxShadow: "0 4px 30px rgba(0,0,0,0.3)",
+                border: "2px solid rgba(255,255,255,0.1)"
+              }}>
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=${process.env.NEXT_PUBLIC_UPI_ID || "deepuonthemove@okaxis"}&pn=BetterSync&cu=INR&tn=Support%20BetterSync`)}`} 
+                  alt="UPI QR Code" 
+                  style={{ width: "200px", height: "200px", display: "block" }} 
+                />
+              </div>
+
+              <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
+                UPI ID: <strong style={{ color: "var(--text-primary)" }}>{process.env.NEXT_PUBLIC_UPI_ID || "deepuonthemove@okaxis"}</strong>
+              </div>
+
+              {/* Mobile Deep Link Button */}
+              <a 
+                href={`upi://pay?pa=${process.env.NEXT_PUBLIC_UPI_ID || "deepuonthemove@okaxis"}&pn=BetterSync&cu=INR&tn=Support%20BetterSync`}
+                className="btn btn-glow"
+                style={{ width: "100%", textDecoration: "none", justifyContent: "center" }}
+              >
+                Open UPI App directly
+              </a>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Footer */}
