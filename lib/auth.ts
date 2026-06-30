@@ -11,6 +11,13 @@ if (process.env.DATABASE_URL) {
     ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
   });
 } else {
+  // In production serverless Vercel deployments, local SQLite files cannot be written or persisted
+  if (process.env.VERCEL === "1") {
+    throw new Error(
+      "Missing DATABASE_URL environment variable. Production hosting on Vercel requires a persistent " +
+      "cloud database (e.g. Supabase PostgreSQL). Please configure your DATABASE_URL in your Vercel Project Settings."
+    );
+  }
   // Fallback to local SQLite database in the workspace - loaded dynamically
   const Database = require("better-sqlite3");
   databaseConfig = new Database("sqlite.db");

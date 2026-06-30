@@ -29,6 +29,9 @@ export async function GET() {
       await pool.end();
     } else {
       // Connect to local SQLite fallback database - loaded dynamically
+      if (process.env.VERCEL === "1") {
+        return NextResponse.json({ providers: [], error: "Missing DATABASE_URL" }, { status: 500 });
+      }
       const Database = require("better-sqlite3");
       const db = new Database("sqlite.db");
       try {

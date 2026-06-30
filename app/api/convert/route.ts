@@ -54,6 +54,9 @@ async function getSpotifyAccessToken(userId: string): Promise<string | null> {
     }
     await pool.end();
   } else {
+    if (process.env.VERCEL === "1") {
+      throw new Error("Missing DATABASE_URL environment variable.");
+    }
     const Database = require("better-sqlite3");
     const db = new Database("sqlite.db");
     try {
