@@ -122,8 +122,103 @@ async function scrapeYoutubeUrl(url: string, requestedPlaylistName?: string): Pr
 
   const json = JSON.parse(match[1]);
   
-  // 1. Playlist parsing
-  if (url.includes("playlist") || url.includes("list=")) {
+  // Determine if this is a watch-page request (video player) or a playlist page
+  const isWatchPage = url.includes("watch?v=") || url.includes("watch?");
+
+  if (isWatchPage) {
+    let videoTitle = "YouTube Video";
+    let channelName = "YouTube Creator";
+    let thumbnail = "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80";
+    let duration = "3:30";
+
+    // 1. YouTube Mix / Playlist Sidebar parsing on watch page
+    if (url.includes("list=")) {
+      try {
+        const playlistObj = json.contents?.twoColumnWatchNextResults?.playlist?.playlist;
+        if (playlistObj) {
+          const playlistTitle = playlistObj.title || requestedPlaylistName || "YouTube Mix";
+          const items = playlistObj.contents;
+          if (items && Array.isArray(items)) {
+            const playlistVideos: Song[] = items
+              .filter((item: any) => item.playlistPanelVideoRenderer)
+              .map((item: any, index: number) => {
+                const renderer = item.playlistPanelVideoRenderer;
+                const videoId = renderer.videoId;
+                const vTitle = renderer.title?.runs?.[0]?.text || renderer.title?.simpleText || "Unknown Track";
+                const uploader = renderer.shortBylineText?.runs?.[0]?.text || "Unknown Channel";
+                const vDuration = renderer.lengthText?.simpleText || "3:30";
+                const thumbs = renderer.thumbnail?.thumbnails;
+                const vThumbnail = thumbs?.[thumbs.length - 1]?.url || "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80";
+
+                return {
+                  id: videoId || `mix_${index}`,
+                  title: cleanVideoTitle(vTitle),
+                  artist: cleanArtistName(uploader, vTitle),
+                  duration: vDuration,
+                  thumbnail: vThumbnail,
+                  status: "pending" as const
+                };
+              });
+
+            if (playlistVideos.length > 0) {
+              return {
+                playlistName: requestedPlaylistName || playlistTitle,
+                youtubeInfo: {
+                  title: playlistTitle,
+                  channel: "YouTube Mix",
+                  thumbnail: playlistVideos[0].thumbnail
+                },
+                tracks: playlistVideos
+              };
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed parsing watch page playlist sidebar details:", e);
+      }
+    }
+
+    // 2. Single Video watch page parsing (if no list or list parsing failed)
+    try {
+      const results = json.contents?.twoColumnWatchNextResults?.results?.results?.contents;
+      if (results && Array.isArray(results)) {
+        const primaryInfo = results.find((r: any) => r.videoPrimaryInfoRenderer)?.videoPrimaryInfoRenderer;
+        if (primaryInfo?.title?.runs?.[0]?.text) {
+          videoTitle = primaryInfo.title.runs[0].text;
+        }
+        
+        const secondaryInfo = results.find((r: any) => r.videoSecondaryInfoRenderer)?.videoSecondaryInfoRenderer;
+        if (secondaryInfo?.owner?.videoOwnerRenderer) {
+          const owner = secondaryInfo.owner.videoOwnerRenderer;
+          channelName = owner.title?.runs?.[0]?.text || channelName;
+          const thumbs = owner.thumbnail?.thumbnails;
+          thumbnail = thumbs?.[thumbs.length - 1]?.url || thumbnail;
+        }
+      }
+    } catch (e) {
+      console.error("Failed parsing watch video details:", e);
+    }
+
+    return {
+      playlistName: requestedPlaylistName || videoTitle,
+      youtubeInfo: {
+        title: videoTitle,
+        channel: channelName,
+        thumbnail: thumbnail,
+      },
+      tracks: [
+        {
+          id: "watch_1",
+          title: cleanVideoTitle(videoTitle),
+          artist: cleanArtistName(channelName, videoTitle),
+          duration: duration,
+          thumbnail: thumbnail,
+          status: "pending" as const
+        }
+      ]
+    };
+  } else {
+    // 3. Standard Playlist page parsing (/playlist?list=...)
     let playlistTitle = requestedPlaylistName || "YouTube Playlist";
     let playlistVideos: Song[] = [];
     
@@ -174,51 +269,6 @@ async function scrapeYoutubeUrl(url: string, requestedPlaylistName?: string): Pr
         thumbnail: playlistVideos[0]?.thumbnail || "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80",
       },
       tracks: playlistVideos
-    };
-  } else {
-    // 2. Single video watch page parsing
-    let videoTitle = "YouTube Video";
-    let channelName = "YouTube Creator";
-    let thumbnail = "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80";
-    let duration = "3:30";
-
-    try {
-      const results = json.contents?.twoColumnWatchNextResults?.results?.results?.contents;
-      if (results && Array.isArray(results)) {
-        const primaryInfo = results.find((r: any) => r.videoPrimaryInfoRenderer)?.videoPrimaryInfoRenderer;
-        if (primaryInfo?.title?.runs?.[0]?.text) {
-          videoTitle = primaryInfo.title.runs[0].text;
-        }
-        
-        const secondaryInfo = results.find((r: any) => r.videoSecondaryInfoRenderer)?.videoSecondaryInfoRenderer;
-        if (secondaryInfo?.owner?.videoOwnerRenderer) {
-          const owner = secondaryInfo.owner.videoOwnerRenderer;
-          channelName = owner.title?.runs?.[0]?.text || channelName;
-          const thumbs = owner.thumbnail?.thumbnails;
-          thumbnail = thumbs?.[thumbs.length - 1]?.url || thumbnail;
-        }
-      }
-    } catch (e) {
-      console.error("Failed parsing watch video details:", e);
-    }
-
-    return {
-      playlistName: requestedPlaylistName || videoTitle,
-      youtubeInfo: {
-        title: videoTitle,
-        channel: channelName,
-        thumbnail: thumbnail,
-      },
-      tracks: [
-        {
-          id: "watch_1",
-          title: cleanVideoTitle(videoTitle),
-          artist: cleanArtistName(channelName, videoTitle),
-          duration: duration,
-          thumbnail: thumbnail,
-          status: "pending" as const
-        }
-      ]
     };
   }
 }
