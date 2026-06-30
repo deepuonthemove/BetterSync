@@ -113,8 +113,8 @@ export default function ConverterClient() {
 
         if (hasGoogle) {
           setYoutubeProfile({
-            name: session?.user.name || "YouTube User",
-            avatar: session?.user.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80"
+            name: data.profiles?.google?.name || session?.user.name || "YouTube User",
+            avatar: data.profiles?.google?.avatar || session?.user.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80"
           });
         } else {
           setYoutubeProfile(null);
@@ -122,8 +122,8 @@ export default function ConverterClient() {
 
         if (hasSpotify) {
           setSpotifyProfile({
-            name: session?.user.name || "Spotify User",
-            avatar: session?.user.image || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=80&h=80&q=80"
+            name: data.profiles?.spotify?.name || "Spotify User",
+            avatar: data.profiles?.spotify?.avatar || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=80&h=80&q=80"
           });
         } else {
           setSpotifyProfile(null);
