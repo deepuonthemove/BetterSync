@@ -876,14 +876,31 @@ export default function ConverterClient() {
                       ))}
                     </div>
 
-                    <button 
-                      onClick={handleStartSync}
-                      className="btn btn-glow"
-                      style={{ width: "100%", marginTop: "1.5rem" }}
-                    >
-                      <Play size={16} fill="white" />
-                      {activePlaylistId ? `Retry Sync (${Object.values(selectedTracks).filter(Boolean).length} Selected Tracks)` : "Sync Tracks directly to Spotify Account"}
-                    </button>
+                    {convertedResult && convertedResult.summary.failed === 0 ? (
+                      <button 
+                        onClick={() => {
+                          setScannedPlaylist(null);
+                          setConvertedResult(null);
+                          setActivePlaylistId(null);
+                          setActivePlaylistUrl(null);
+                          setUrl("");
+                        }}
+                        className="btn btn-glow"
+                        style={{ width: "100%", marginTop: "1.5rem" }}
+                      >
+                        <Play size={16} fill="white" />
+                        Transfer Another Playlist
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handleStartSync}
+                        className="btn btn-glow"
+                        style={{ width: "100%", marginTop: "1.5rem" }}
+                      >
+                        <Play size={16} fill="white" />
+                        {activePlaylistId ? `Retry Sync (${Object.values(selectedTracks).filter(Boolean).length} Selected Tracks)` : "Sync Tracks directly to Spotify Account"}
+                      </button>
+                    )}
                   </div>
                 )}
 
