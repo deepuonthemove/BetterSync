@@ -25,6 +25,8 @@ if (process.env.DATABASE_URL) {
 
 export const auth = betterAuth({
   database: databaseConfig,
+  // Dynamic fallback secret to allow clean compilations; must be set to a secure string in Vercel environment variables
+  secret: process.env.BETTER_AUTH_SECRET || "a_secure_fallback_secret_for_bettersync_local_builds",
   emailAndPassword: {
     enabled: true,
   },
