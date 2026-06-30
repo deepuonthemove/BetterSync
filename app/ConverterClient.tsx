@@ -97,42 +97,42 @@ export default function ConverterClient() {
   // Toast Notification HUD State
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "info" }[]>([]);
 
-  // Synchronize live accounts via DB query on session load
-  useEffect(() => {
-    const fetchConnectedAccounts = async () => {
-      try {
-        const response = await fetch("/api/auth/connected-providers");
-        const data = await response.json();
-        if (data.providers) {
-          const hasGoogle = data.providers.includes("google");
-          const hasSpotify = data.providers.includes("spotify");
-          
-          setIsYoutubeConnected(hasGoogle);
-          setIsSpotifyConnected(hasSpotify);
+  // Synchronize live accounts via DB query
+  const fetchConnectedAccounts = async () => {
+    try {
+      const response = await fetch("/api/auth/connected-providers");
+      const data = await response.json();
+      if (data.providers) {
+        const hasGoogle = data.providers.includes("google");
+        const hasSpotify = data.providers.includes("spotify");
+        
+        setIsYoutubeConnected(hasGoogle);
+        setIsSpotifyConnected(hasSpotify);
 
-          if (hasGoogle) {
-            setYoutubeProfile({
-              name: session?.user.name || "YouTube User",
-              avatar: session?.user.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80"
-            });
-          } else {
-            setYoutubeProfile(null);
-          }
-
-          if (hasSpotify) {
-            setSpotifyProfile({
-              name: session?.user.name || "Spotify User",
-              avatar: session?.user.image || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=80&h=80&q=80"
-            });
-          } else {
-            setSpotifyProfile(null);
-          }
+        if (hasGoogle) {
+          setYoutubeProfile({
+            name: session?.user.name || "YouTube User",
+            avatar: session?.user.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80"
+          });
+        } else {
+          setYoutubeProfile(null);
         }
-      } catch (err) {
-        console.error("Failed querying connected accounts:", err);
-      }
-    };
 
+        if (hasSpotify) {
+          setSpotifyProfile({
+            name: session?.user.name || "Spotify User",
+            avatar: session?.user.image || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=80&h=80&q=80"
+          });
+        } else {
+          setSpotifyProfile(null);
+        }
+      }
+    } catch (err) {
+      console.error("Failed querying connected accounts:", err);
+    }
+  };
+
+  useEffect(() => {
     if (session) {
       fetchConnectedAccounts();
     } else {
@@ -141,6 +141,18 @@ export default function ConverterClient() {
       setYoutubeProfile(null);
       setSpotifyProfile(null);
     }
+  }, [session]);
+
+  // Refresh auth status reactively when user focuses back on the main tab
+  useEffect(() => {
+    const handleFocus = async () => {
+      const updated = await authClient.getSession();
+      if (updated?.data) {
+        await fetchConnectedAccounts();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, [session]);
 
   // Helpers for adding toast alerts
@@ -166,30 +178,36 @@ export default function ConverterClient() {
     addToast(`Selected public ${presetType === "lofi" ? "Lofi Chill" : presetType === "synthwave" ? "Synthwave Drive" : "Acoustic Cozy"} Playlist URL.`, "info");
   };
 
-  // Connect & Log in handlers using real Better Auth redirect flows
+  // Connect & Log in handlers using real Better Auth redirect flows in a new tab
   const handleConnectYoutube = async () => {
     try {
       if (isYoutubeConnected) {
-        // Log out or clear session
         await authClient.signOut();
         addToast("Logged out of session.", "info");
         return;
       }
       
+      let authUrl: string | undefined;
       if (session) {
-        // User logged in via Spotify, link YouTube profile
-        addToast("Connecting YouTube account details...", "info");
-        await authClient.linkSocial({
+        addToast("Opening YouTube connection in a new tab...", "info");
+        const res = await authClient.linkSocial({
           provider: "google",
-          callbackURL: window.location.origin
+          callbackURL: window.location.origin,
+          disableRedirect: true
         });
+        authUrl = res.data?.url;
       } else {
-        // Direct OAuth sign-in redirect
-        addToast("Signing in with YouTube (Google OAuth)...", "info");
-        await authClient.signIn.social({
+        addToast("Opening YouTube login in a new tab...", "info");
+        const res = await authClient.signIn.social({
           provider: "google",
-          callbackURL: window.location.origin
+          callbackURL: window.location.origin,
+          disableRedirect: true
         });
+        authUrl = res.data?.url;
+      }
+
+      if (authUrl) {
+        window.open(authUrl, "_blank");
       }
     } catch (err: any) {
       addToast(err.message || "Failed to link Google account", "error");
@@ -204,18 +222,27 @@ export default function ConverterClient() {
         return;
       }
 
+      let authUrl: string | undefined;
       if (session) {
-        addToast("Connecting Spotify account details...", "info");
-        await authClient.linkSocial({
+        addToast("Opening Spotify connection in a new tab...", "info");
+        const res = await authClient.linkSocial({
           provider: "spotify",
-          callbackURL: window.location.origin
+          callbackURL: window.location.origin,
+          disableRedirect: true
         });
+        authUrl = res.data?.url;
       } else {
-        addToast("Signing in with Spotify OAuth...", "info");
-        await authClient.signIn.social({
+        addToast("Opening Spotify login in a new tab...", "info");
+        const res = await authClient.signIn.social({
           provider: "spotify",
-          callbackURL: window.location.origin
+          callbackURL: window.location.origin,
+          disableRedirect: true
         });
+        authUrl = res.data?.url;
+      }
+
+      if (authUrl) {
+        window.open(authUrl, "_blank");
       }
     } catch (err: any) {
       addToast(err.message || "Failed to link Spotify account", "error");
