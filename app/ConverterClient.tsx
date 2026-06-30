@@ -347,14 +347,17 @@ export default function ConverterClient() {
       let currentIndex = 0;
       const interval = setInterval(() => {
         if (currentIndex < initialTracks.length) {
+          const index = currentIndex; // Capture index in block-scoped constant to prevent async closure out-of-bound errors
           setConversionTracks((prev) => {
             const copy = [...prev];
-            const resultTrack = resultData.tracks[currentIndex];
-            copy[currentIndex] = {
-              ...copy[currentIndex],
-              status: resultTrack.status,
-              spotifyUri: resultTrack.spotifyUri
-            };
+            const resultTrack = resultData.tracks?.[index];
+            if (resultTrack && copy[index]) {
+              copy[index] = {
+                ...copy[index],
+                status: resultTrack.status,
+                spotifyUri: resultTrack.spotifyUri
+              };
+            }
             return copy;
           });
 
