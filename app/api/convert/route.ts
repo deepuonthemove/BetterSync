@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { Pool } from "pg";
-import Database from "better-sqlite3";
 
 // Define TypeScript structures for our song items
 interface Song {
@@ -41,6 +39,7 @@ async function getSpotifyAccessToken(userId: string): Promise<string | null> {
   let token: string | null = null;
   
   if (process.env.DATABASE_URL) {
+    const { Pool } = require("pg");
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.DATABASE_URL.includes("supabase.co") ? { rejectUnauthorized: false } : undefined,
@@ -55,6 +54,7 @@ async function getSpotifyAccessToken(userId: string): Promise<string | null> {
     }
     await pool.end();
   } else {
+    const Database = require("better-sqlite3");
     const db = new Database("sqlite.db");
     try {
       const stmt = db.prepare("SELECT accessToken FROM account WHERE userId = ? AND provider = ?");

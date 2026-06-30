@@ -1,19 +1,18 @@
 import { betterAuth } from "better-auth";
-import { Pool } from "pg";
-import Database from "better-sqlite3";
 
 let databaseConfig: any;
 
-const isSupabase = process.env.DATABASE_URL && process.env.DATABASE_URL.includes("supabase.co");
-
 if (process.env.DATABASE_URL) {
-  // Use Supabase PostgreSQL
+  // Use Supabase PostgreSQL - loaded dynamically to bypass Vercel binary errors
+  const { Pool } = require("pg");
+  const isSupabase = process.env.DATABASE_URL.includes("supabase.co");
   databaseConfig = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
   });
 } else {
-  // Fallback to local SQLite database in the workspace
+  // Fallback to local SQLite database in the workspace - loaded dynamically
+  const Database = require("better-sqlite3");
   databaseConfig = new Database("sqlite.db");
 }
 

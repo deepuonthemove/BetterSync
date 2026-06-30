@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { Pool } from "pg";
-import Database from "better-sqlite3";
 
 export async function GET() {
   try {
@@ -20,7 +18,8 @@ export async function GET() {
     let providers: string[] = [];
 
     if (process.env.DATABASE_URL) {
-      // Connect to Supabase PostgreSQL to query accounts
+      // Connect to Supabase PostgreSQL - loaded dynamically
+      const { Pool } = require("pg");
       const pool = new Pool({
         connectionString: process.env.DATABASE_URL,
         ssl: process.env.DATABASE_URL.includes("supabase.co") ? { rejectUnauthorized: false } : undefined,
@@ -29,7 +28,8 @@ export async function GET() {
       providers = res.rows.map((r: any) => r.provider);
       await pool.end();
     } else {
-      // Connect to local SQLite fallback database
+      // Connect to local SQLite fallback database - loaded dynamically
+      const Database = require("better-sqlite3");
       const db = new Database("sqlite.db");
       try {
         const stmt = db.prepare("SELECT provider FROM account WHERE userId = ?");
