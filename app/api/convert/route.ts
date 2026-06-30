@@ -351,7 +351,9 @@ export async function POST(request: NextRequest) {
           })
         });
         if (!createPlaylistRes.ok) {
-          throw new Error("Failed to create Spotify playlist in your account.");
+          const rawErr = await createPlaylistRes.text();
+          console.error("Spotify Create Playlist Error:", rawErr);
+          throw new Error(`Failed to create Spotify playlist: ${rawErr}`);
         }
         const playlistData = await createPlaylistRes.json();
         const playlistId = playlistData.id;
