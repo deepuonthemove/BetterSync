@@ -93,6 +93,8 @@ export default function ConverterClient() {
     playlistUrl: string;
     summary: { total: number; transferred: number; failed: number; accuracy: number };
   } | null>(null);
+  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
+  const [activePlaylistUrl, setActivePlaylistUrl] = useState<string | null>(null);
 
   // Toast Notification HUD State
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "info" }[]>([]);
@@ -258,6 +260,8 @@ export default function ConverterClient() {
     setIsScanning(true);
     setScannedPlaylist(null);
     setConvertedResult(null);
+    setActivePlaylistId(null);
+    setActivePlaylistUrl(null);
 
     try {
       const response = await fetch("/api/convert", {
@@ -332,7 +336,9 @@ export default function ConverterClient() {
         body: JSON.stringify({
           action: "transfer",
           playlistName: targetPlaylistName,
-          tracks: tracksToSync
+          tracks: tracksToSync,
+          targetPlaylistId: activePlaylistId,
+          targetPlaylistUrl: activePlaylistUrl
         })
       });
       const resultData = await response.json();
@@ -365,10 +371,46 @@ export default function ConverterClient() {
           setConversionProgress(Math.round((currentIndex / initialTracks.length) * 100));
         } else {
           clearInterval(interval);
+          setActivePlaylistId(resultData.playlistId);
+          setActivePlaylistUrl(resultData.playlistUrl);
+
           setConvertedResult({
             playlistUrl: resultData.playlistUrl,
             summary: resultData.summary
           });
+
+          // Update original scanned playlist track list with final statuses
+          setScannedPlaylist((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              tracks: prev.tracks.map((t) => {
+                const match = resultData.tracks?.find((rt: any) => rt.id === t.id);
+                if (match) {
+                  return {
+                    ...t,
+                    status: match.status,
+                    spotifyUri: match.spotifyUri
+                  };
+                }
+                return t;
+              })
+            };
+          });
+
+          // Uncheck successfully matched tracks, keep failed tracks selected for retry
+          setSelectedTracks((prev) => {
+            const nextSel = { ...prev };
+            resultData.tracks?.forEach((track: any) => {
+              if (track.status === "matched") {
+                nextSel[track.id] = false;
+              } else {
+                nextSel[track.id] = true;
+              }
+            });
+            return nextSel;
+          });
+
           setIsConverting(false);
           addToast("Playlist transfer completed successfully!", "success");
         }
@@ -709,30 +751,79 @@ export default function ConverterClient() {
                 )}
 
                 {/* PLAYLIST TRACKLIST VIEW */}
-                {scannedPlaylist && !isScanning && !isConverting && !convertedResult && (
+                {scannedPlaylist && !isScanning && !isConverting && (
                   <div className="animate-fade" style={{ border: "1px solid var(--border-color)", borderRadius: "12px", padding: "1.5rem" }}>
                     
-                    <div style={{ display: "flex", gap: "1.25rem", borderBottom: "1px solid var(--border-color)", paddingBottom: "1.5rem", marginBottom: "1.5rem", alignItems: "center" }}>
-                      <img src={scannedPlaylist.youtubeInfo.thumbnail} alt="Cover" style={{ width: "70px", height: "70px", borderRadius: "8px", objectFit: "cover" }} />
-                      <div>
-                        <h4 style={{ fontSize: "1.1rem", marginBottom: "0.25rem" }}>{scannedPlaylist.playlistName}</h4>
-                        <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                          Channel: <span style={{ color: "var(--text-primary)" }}>{scannedPlaylist.youtubeInfo.channel}</span> • Scraped Tracks: <span style={{ color: "var(--text-primary)" }}>{scannedPlaylist.totalTracks}</span>
-                        </p>
+                    <div style={{ display: "flex", gap: "1.25rem", borderBottom: "1px solid var(--border-color)", paddingBottom: "1.5rem", marginBottom: "1.5rem", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", gap: "1.25rem", alignItems: "center" }}>
+                        <img src={scannedPlaylist.youtubeInfo.thumbnail} alt="Cover" style={{ width: "70px", height: "70px", borderRadius: "8px", objectFit: "cover" }} />
+                        <div>
+                          <h4 style={{ fontSize: "1.1rem", marginBottom: "0.25rem" }}>{scannedPlaylist.playlistName}</h4>
+                          <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                            Channel: <span style={{ color: "var(--text-primary)" }}>{scannedPlaylist.youtubeInfo.channel}</span> • Scraped Tracks: <span style={{ color: "var(--text-primary)" }}>{scannedPlaylist.totalTracks}</span>
+                          </p>
+                        </div>
                       </div>
+                      <button 
+                        onClick={() => {
+                          setScannedPlaylist(null);
+                          setConvertedResult(null);
+                          setActivePlaylistId(null);
+                          setActivePlaylistUrl(null);
+                        }} 
+                        className="btn btn-secondary" 
+                        style={{ padding: "0.5rem 0.75rem", fontSize: "0.8rem", height: "auto" }}
+                      >
+                        Clear & Scan New
+                      </button>
                     </div>
 
-                    <div style={{ marginBottom: "1.5rem" }}>
-                      <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "0.5rem", fontWeight: 500 }}>
-                        Create Target Spotify Playlist Name
-                      </label>
-                      <input 
-                        type="text" 
-                        value={targetPlaylistName}
-                        onChange={(e) => setTargetPlaylistName(e.target.value)}
-                        className="form-input"
-                      />
-                    </div>
+                    {/* Converted Results Status Banner */}
+                    {convertedResult && (
+                      <div style={{ 
+                        border: "1px solid var(--border-color)", 
+                        borderRadius: "8px", 
+                        padding: "1rem", 
+                        background: "rgba(255,255,255,0.01)", 
+                        marginBottom: "1.5rem",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.75rem"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                          <div>
+                            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--spotify-green)", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                              <CheckCircle2 size={14} /> Sync Summary
+                            </span>
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                              Transferred {convertedResult.summary.transferred} / {convertedResult.summary.total} songs ({convertedResult.summary.accuracy}% match accuracy)
+                            </span>
+                          </div>
+                          <a href={convertedResult.playlistUrl} target="_blank" rel="noopener noreferrer" className="btn btn-glow" style={{ padding: "0.4rem 0.8rem", fontSize: "0.75rem", height: "auto" }}>
+                            <ExternalLink size={12} /> Open on Spotify
+                          </a>
+                        </div>
+                        {convertedResult.summary.failed > 0 && (
+                          <div style={{ fontSize: "0.75rem", color: "var(--youtube-red)", background: "rgba(255,75,75,0.05)", padding: "0.5rem 0.75rem", borderRadius: "6px" }}>
+                            ⚠️ {convertedResult.summary.failed} tracks failed to sync. Review the list below and click "Retry Sync" to match them using our fuzzy fallbacks!
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!activePlaylistId && (
+                      <div style={{ marginBottom: "1.5rem" }}>
+                        <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "0.5rem", fontWeight: 500 }}>
+                          Create Target Spotify Playlist Name
+                        </label>
+                        <input 
+                          type="text" 
+                          value={targetPlaylistName}
+                          onChange={(e) => setTargetPlaylistName(e.target.value)}
+                          className="form-input"
+                        />
+                      </div>
+                    )}
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "0.75rem", borderBottom: "1px solid var(--border-color)", marginBottom: "0.5rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
                       <button onClick={toggleAllTracks} style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -758,7 +849,7 @@ export default function ConverterClient() {
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                            <div style={{ color: selectedTracks[track.id] ? "var(--accent-violet)" : "var(--text-muted)" }}>
+                            <div style={{ color: selectedTracks[track.id] ? "var(--accent-violet)" : "var(--text-muted)", display: "flex", alignItems: "center" }}>
                               {selectedTracks[track.id] ? <CheckCircle2 size={16} /> : <XCircle size={16} style={{ opacity: 0.3 }} />}
                             </div>
                             <img src={track.thumbnail} alt="Song" style={{ width: "32px", height: "32px", borderRadius: "4px", objectFit: "cover" }} />
@@ -767,7 +858,20 @@ export default function ConverterClient() {
                               <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{track.artist}</span>
                             </div>
                           </div>
-                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{track.duration}</span>
+                          
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            {track.status === "matched" && (
+                              <span style={{ fontSize: "0.7rem", color: "var(--spotify-green)", border: "1px solid var(--spotify-green)", padding: "0.15rem 0.35rem", borderRadius: "4px", fontWeight: 500 }}>
+                                ✓ matched
+                              </span>
+                            )}
+                            {track.status === "failed" && (
+                              <span style={{ fontSize: "0.7rem", color: "var(--youtube-red)", border: "1px solid var(--youtube-red)", padding: "0.15rem 0.35rem", borderRadius: "4px", fontWeight: 500 }}>
+                                ✕ no match
+                              </span>
+                            )}
+                            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{track.duration}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -778,7 +882,7 @@ export default function ConverterClient() {
                       style={{ width: "100%", marginTop: "1.5rem" }}
                     >
                       <Play size={16} fill="white" />
-                      Sync Tracks directly to Spotify Account
+                      {activePlaylistId ? `Retry Sync (${Object.values(selectedTracks).filter(Boolean).length} Selected Tracks)` : "Sync Tracks directly to Spotify Account"}
                     </button>
                   </div>
                 )}
@@ -819,57 +923,6 @@ export default function ConverterClient() {
                   </div>
                 )}
 
-                {/* TRANSFER SUCCESS SCREEN */}
-                {convertedResult && !isConverting && (
-                  <div className="animate-fade" style={{ border: "1px solid var(--border-color)", borderRadius: "12px", padding: "2rem", textAlign: "center" }}>
-                    <div style={{
-                      width: "60px",
-                      height: "60px",
-                      borderRadius: "50%",
-                      background: "rgba(29, 185, 84, 0.1)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      margin: "0 auto 1.5rem"
-                    }}>
-                      <CheckCircle2 size={36} color="var(--spotify-green)" />
-                    </div>
-
-                    <h3 style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Sync Successful!</h3>
-                    <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
-                      Created Spotify playlist <strong style={{ color: "var(--text-primary)" }}>{targetPlaylistName}</strong>.
-                    </p>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.75rem", border: "1px solid var(--border-color)", padding: "1rem", borderRadius: "12px", background: "rgba(255,255,255,0.01)", marginBottom: "2rem" }}>
-                      <div>
-                        <span style={{ display: "block", fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>TOTAL</span>
-                        <span style={{ fontSize: "1.25rem", fontWeight: 700 }}>{convertedResult.summary.total}</span>
-                      </div>
-                      <div>
-                        <span style={{ display: "block", fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>SYNCED</span>
-                        <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--spotify-green)" }}>{convertedResult.summary.transferred}</span>
-                      </div>
-                      <div>
-                        <span style={{ display: "block", fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>FAILED</span>
-                        <span style={{ fontSize: "1.25rem", fontWeight: 700, color: convertedResult.summary.failed > 0 ? "var(--youtube-red)" : "var(--text-primary)" }}>{convertedResult.summary.failed}</span>
-                      </div>
-                      <div>
-                        <span style={{ display: "block", fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>ACCURACY</span>
-                        <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--accent-violet)" }}>{convertedResult.summary.accuracy}%</span>
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-                      <a href={convertedResult.playlistUrl} target="_blank" rel="noopener noreferrer" className="btn btn-glow">
-                        <ExternalLink size={16} />
-                        Open on Spotify
-                      </a>
-                      <button onClick={() => setConvertedResult(null)} className="btn btn-secondary">
-                        Transfer Another Playlist
-                      </button>
-                    </div>
-                  </div>
-                )}
 
               </div>
             </div>

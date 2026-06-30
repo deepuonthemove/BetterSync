@@ -312,7 +312,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "transfer") {
-      const { tracks, playlistName } = body;
+      const { tracks, playlistName, targetPlaylistId, targetPlaylistUrl } = body;
       if (!tracks || !Array.isArray(tracks)) {
         return NextResponse.json({ error: "Tracks are required for transfer" }, { status: 400 });
       }
@@ -327,37 +327,45 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // 1. Create the target Spotify playlist using the direct /me/playlists endpoint
-        const createPlaylistRes = await fetch("https://api.spotify.com/v1/me/playlists", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${spotifyToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            name: playlistName || "My YouTube Transfer",
-            description: "Transferred via BetterSync",
-            public: false
-          })
-        });
-        if (!createPlaylistRes.ok) {
-          const rawErr = await createPlaylistRes.text();
-          console.error("Spotify Create Playlist Error:", rawErr);
-          throw new Error(`Failed to create Spotify playlist: ${rawErr}`);
-        }
-        const playlistData = await createPlaylistRes.json();
-        const playlistId = playlistData.id;
-        const playlistUrl = playlistData.external_urls.spotify;
+        let playlistId = targetPlaylistId;
+        let playlistUrl = targetPlaylistUrl;
 
-        // 3. Search Spotify database for matching track names + artist names
+        // 1. Create the target Spotify playlist only if we don't already have a target playlist ID (e.g. on Retry)
+        if (!playlistId) {
+          const createPlaylistRes = await fetch("https://api.spotify.com/v1/me/playlists", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${spotifyToken}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              name: playlistName || "My YouTube Transfer",
+              description: "Transferred via BetterSync",
+              public: false
+            })
+          });
+          if (!createPlaylistRes.ok) {
+            const rawErr = await createPlaylistRes.text();
+            console.error("Spotify Create Playlist Error:", rawErr);
+            throw new Error(`Failed to create Spotify playlist: ${rawErr}`);
+          }
+          const playlistData = await createPlaylistRes.json();
+          playlistId = playlistData.id;
+          playlistUrl = playlistData.external_urls.spotify;
+        }
+
+        // 2. Search Spotify database with high-accuracy Search Cascade
         const matchedUris: string[] = [];
         const updatedTracks: Song[] = [];
 
         for (const track of tracks) {
           try {
-            // Clean up queries for better match accuracy
-            const query = encodeURIComponent(`track:${track.title} artist:${track.artist}`);
-            const searchRes = await fetch(`https://api.spotify.com/v1/search?q=${query}&type=track&limit=1`, {
+            let matchFound = false;
+            let spotifyTrackUri = "";
+
+            // Attempt 1: Strict query (field-level search, high accuracy but fragile)
+            const strictQuery = encodeURIComponent(`track:${track.title} artist:${track.artist}`);
+            let searchRes = await fetch(`https://api.spotify.com/v1/search?q=${strictQuery}&type=track&limit=1`, {
               headers: { Authorization: `Bearer ${spotifyToken}` }
             });
 
@@ -365,14 +373,55 @@ export async function POST(request: NextRequest) {
               const searchData = await searchRes.json();
               const items = searchData.tracks?.items;
               if (items && items.length > 0) {
-                matchedUris.push(items[0].uri);
-                updatedTracks.push({
-                  ...track,
-                  status: "matched" as const,
-                  spotifyUri: items[0].uri
-                });
-                continue;
+                spotifyTrackUri = items[0].uri;
+                matchFound = true;
               }
+            }
+
+            // Attempt 2: Fuzzy text query (free-text search, letting Spotify's algorithm resolve spelling/remix details)
+            if (!matchFound) {
+              const fuzzyQuery = encodeURIComponent(`${track.title} ${track.artist}`);
+              searchRes = await fetch(`https://api.spotify.com/v1/search?q=${fuzzyQuery}&type=track&limit=1`, {
+                headers: { Authorization: `Bearer ${spotifyToken}` }
+              });
+
+              if (searchRes.ok) {
+                const searchData = await searchRes.json();
+                const items = searchData.tracks?.items;
+                if (items && items.length > 0) {
+                  spotifyTrackUri = items[0].uri;
+                  matchFound = true;
+                }
+              }
+            }
+
+            // Attempt 3: Relaxed primary title search (cleaning out feat., ft., or secondary details)
+            if (!matchFound) {
+              const cleanTitle = track.title.split(/\s*feat\.*\s*/i)[0].split(/\s*ft\.*\s*/i)[0].trim();
+              const primaryArtist = track.artist.split(",")[0].trim();
+              const relaxedQuery = encodeURIComponent(`${cleanTitle} ${primaryArtist}`);
+              searchRes = await fetch(`https://api.spotify.com/v1/search?q=${relaxedQuery}&type=track&limit=1`, {
+                headers: { Authorization: `Bearer ${spotifyToken}` }
+              });
+
+              if (searchRes.ok) {
+                const searchData = await searchRes.json();
+                const items = searchData.tracks?.items;
+                if (items && items.length > 0) {
+                  spotifyTrackUri = items[0].uri;
+                  matchFound = true;
+                }
+              }
+            }
+
+            if (matchFound) {
+              matchedUris.push(spotifyTrackUri);
+              updatedTracks.push({
+                ...track,
+                status: "matched" as const,
+                spotifyUri: spotifyTrackUri
+              });
+              continue;
             }
           } catch (e) {
             console.error("Spotify search error for:", track.title, e);
@@ -384,7 +433,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // 4. Add the matched URIs into the new Spotify playlist
+        // 3. Add the matched URIs into the Spotify playlist
         if (matchedUris.length > 0) {
           const addRes = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items`, {
             method: "POST",
@@ -403,7 +452,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           success: true,
-          playlistName: playlistName || "My YouTube Transfer",
+          playlistId: playlistId,
           playlistUrl: playlistUrl,
           summary: {
             total: updatedTracks.length,
