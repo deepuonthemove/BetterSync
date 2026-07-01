@@ -914,17 +914,31 @@ export default function ConverterClient() {
                     </div>
 
                     {(url.includes("list=RD") || url.includes("list=LM")) && (
-                      <div style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "var(--text-secondary)", background: "rgba(139, 92, 246, 0.05)", padding: "0.75rem", borderRadius: "8px", border: "1px solid rgba(139, 92, 246, 0.2)", lineHeight: 1.4 }}>
-                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.35rem", color: "var(--accent-violet)", fontWeight: 600 }}>
+                      <div style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "var(--text-secondary)", background: "rgba(139, 92, 246, 0.05)", padding: "1rem", borderRadius: "8px", border: "1px solid rgba(139, 92, 246, 0.2)", lineHeight: 1.5 }}>
+                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem", color: "var(--accent-violet)", fontWeight: 700 }}>
                           <span>⚡</span>
-                          <span>YouTube Mix Scraper Automation</span>
+                          <span>YouTube Mix Scraper (Bookmarklet Method)</span>
                         </div>
                         <div>
-                          Choose either option to import your Mix automatically without manual copying:
-                          <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                            <a href="/scraper.user.js" target="_blank" className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem", display: "inline-flex", gap: "0.25rem", width: "auto", height: "auto" }}>
-                              📥 Install Userscript (Chrome/Brave)
-                            </a>
+                          YouTube Mixes are generated dynamically in your browser session. To automatically capture all tracks with zero manual typing, use our custom bookmarklet:
+                          
+                          <ol style={{ paddingLeft: "1.2rem", marginTop: "0.5rem", marginBottom: "1rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                            <li>
+                              Ensure your browser's Bookmarks Bar is visible (press <code>Ctrl+Shift+B</code> or <code>Cmd+Shift+B</code>).
+                            </li>
+                            <li>
+                              <strong>Drag and drop</strong> the purple button below directly onto your Bookmarks Bar.
+                            </li>
+                            <li>
+                              Click the grey <strong>Launch YouTube Mix</strong> button to open your Mix page.
+                            </li>
+                            <li>
+                              While on the YouTube Mix page, click the <strong>Sync to BetterSync</strong> bookmark on your Bookmarks Bar. The page will auto-scroll, read your tracks, and load them directly into this dashboard!
+                            </li>
+                          </ol>
+
+                          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+                            {/* Draggable bookmarklet link */}
                             <a 
                               ref={setBookmarkletHref}
                               className="btn btn-glow" 
@@ -935,14 +949,23 @@ export default function ConverterClient() {
                                 gap: "0.25rem", 
                                 width: "auto", 
                                 height: "auto",
-                                border: "1px dashed var(--accent-violet)"
+                                border: "1px dashed var(--accent-violet)",
+                                cursor: "grab"
                               }}
                               onClick={(e) => {
-                                alert("BetterSync Bookmarklet:\n\nDrag this button to your browser's Bookmarks Bar.\nThen, when you are watching your YouTube Mix, click it to automatically sync all tracks to BetterSync!");
+                                alert("Sync to BetterSync Bookmarklet:\n\nDrag this button directly to your browser's Bookmarks Bar.\n\nThen, when you are watching your YouTube Mix, click it in your bookmarks bar to sync the tracks!");
                               }}
                             >
-                              ⭐ Drag to Bookmarks Bar (No Extensions!)
+                              ⭐ Sync to BetterSync
                             </a>
+
+                            <button 
+                              onClick={handleAutomateMixCapture}
+                              className="btn btn-secondary"
+                              style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem", height: "auto" }}
+                            >
+                              ⚡ Launch YouTube Mix
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -982,22 +1005,18 @@ export default function ConverterClient() {
                       Import Track List
                     </button>
 
-                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", background: "rgba(255,255,255,0.01)", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-color)", lineHeight: 1.4 }}>
-                      💡 <strong>Want 100% Automated YouTube Mix Sync?</strong>
-                      <div style={{ marginTop: "0.35rem" }}>
-                        Instead of manual lists, choose either method to automate mix syncing:
-                        <ol style={{ paddingLeft: "1.25rem", marginTop: "0.35rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", background: "rgba(255,255,255,0.01)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border-color)", lineHeight: 1.5 }}>
+                      💡 <strong>1-Click YouTube Mix Sync (Bookmarklet Method)</strong>
+                      <div style={{ marginTop: "0.5rem" }}>
+                        Instead of manual copy-pasting, you can automate track imports directly from YouTube using our browser bookmarklet:
+                        
+                        <ol style={{ paddingLeft: "1.2rem", marginTop: "0.5rem", marginBottom: "1rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
                           <li>
-                            <strong>Option A (Userscript):</strong> Install Tampermonkey, then click below to add our official script:
-                            <div style={{ marginTop: "0.25rem" }}>
-                              <a href="/scraper.user.js" target="_blank" className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem", display: "inline-flex", gap: "0.25rem", width: "auto", height: "auto" }}>
-                                📥 Install Scraper Userscript
-                              </a>
-                            </div>
+                            Ensure your browser's Bookmarks Bar is visible (press <code>Ctrl+Shift+B</code> or <code>Cmd+Shift+B</code>).
                           </li>
                           <li>
-                            <strong>Option B (Bookmarklet - No Extensions!):</strong> Drag the button below to your Bookmarks Bar. When playing a YouTube Mix, click it to sync instantly:
-                            <div style={{ marginTop: "0.25rem" }}>
+                            <strong>Drag and drop</strong> this button onto your Bookmarks Bar:
+                            <div style={{ marginTop: "0.35rem" }}>
                               <a 
                                 ref={setBookmarkletHref}
                                 className="btn btn-glow" 
@@ -1008,15 +1027,19 @@ export default function ConverterClient() {
                                   gap: "0.25rem", 
                                   width: "auto", 
                                   height: "auto",
-                                  border: "1px dashed var(--accent-violet)"
+                                  border: "1px dashed var(--accent-violet)",
+                                  cursor: "grab"
                                 }}
                                 onClick={(e) => {
-                                  alert("BetterSync Bookmarklet:\n\nDrag this button to your browser's Bookmarks Bar.\nThen, when you are watching your YouTube Mix, click it to automatically sync all tracks to BetterSync!");
+                                  alert("Sync to BetterSync Bookmarklet:\n\nDrag this button directly to your browser's Bookmarks Bar.\n\nThen, when you are watching your YouTube Mix, click it in your bookmarks bar to sync the tracks!");
                                 }}
                               >
-                                ⭐ Drag to Bookmarks Bar
+                                ⭐ Sync to BetterSync
                               </a>
                             </div>
+                          </li>
+                          <li>
+                            Open your YouTube Mix page, and click the **Sync to BetterSync** bookmark you just added. The page will auto-scroll, read your tracks, and automatically reload them in this dashboard!
                           </li>
                         </ol>
                       </div>
