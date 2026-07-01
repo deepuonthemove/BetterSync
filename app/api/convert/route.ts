@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import * as Sentry from "@sentry/nextjs";
 
 // Define TypeScript structures for our song items
 interface Song {
@@ -375,6 +376,7 @@ export async function POST(request: NextRequest) {
           youtubeInfo: scraped.youtubeInfo
         });
       } catch (err: any) {
+        Sentry.captureException(err);
         console.error("YouTube scraping error:", err);
         return NextResponse.json(
           { error: err.message || "Failed to extract tracks from the provided YouTube URL. Ensure the playlist is public." },
@@ -535,6 +537,7 @@ export async function POST(request: NextRequest) {
           tracks: updatedTracks
         });
       } catch (err: any) {
+        Sentry.captureException(err);
         console.error("Spotify API process error:", err);
         return NextResponse.json({ error: err.message || "Failed to complete Spotify sync." }, { status: 500 });
       }
@@ -542,6 +545,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error: any) {
+    Sentry.captureException(error);
     console.error("API Convert Error:", error);
     return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
