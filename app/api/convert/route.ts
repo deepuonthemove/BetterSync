@@ -222,36 +222,104 @@ async function scrapeYoutubeUrl(url: string, requestedPlaylistName?: string): Pr
     let playlistTitle = requestedPlaylistName || "YouTube Playlist";
     let playlistVideos: Song[] = [];
     
-    try {
-      const sidebar = json.sidebar?.playlistSidebarRenderer?.items;
-      const primaryInfo = sidebar?.[0]?.playlistSidebarPrimaryInfoRenderer;
-      if (primaryInfo?.title?.runs?.[0]?.text) {
-        playlistTitle = primaryInfo.title.runs[0].text;
+    // Deep search helper to find keys
+    const findDeepKey = (obj: any, targetKey: string): any => {
+      if (!obj || typeof obj !== "object") return null;
+      if (obj[targetKey]) return obj[targetKey];
+      
+      for (const key of Object.keys(obj)) {
+        const result = findDeepKey(obj[key], targetKey);
+        if (result) return result;
       }
-      
-      const contents = json.contents?.twoColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents;
-      
-      if (contents && Array.isArray(contents)) {
-        playlistVideos = contents
-          .filter((item: any) => item.playlistVideoRenderer)
-          .map((item: any, index: number) => {
-            const renderer = item.playlistVideoRenderer;
+      return null;
+    };
+
+    // Deep search helper to gather all matching items
+    const findAllDeep = (obj: any, targetKey: string, results: any[] = []) => {
+      if (!obj || typeof obj !== "object") return;
+      if (obj[targetKey]) {
+        results.push(obj[targetKey]);
+      }
+      for (const key of Object.keys(obj)) {
+        findAllDeep(obj[key], targetKey, results);
+      }
+    };
+
+    try {
+      // Find Title
+      const sidebarPrimary = findDeepKey(json, "playlistSidebarPrimaryInfoRenderer");
+      if (sidebarPrimary?.title?.runs?.[0]?.text) {
+        playlistTitle = sidebarPrimary.title.runs[0].text;
+      } else {
+        const headerTitle = findDeepKey(json, "playlistHeaderRenderer");
+        if (headerTitle?.title?.simpleText) {
+          playlistTitle = headerTitle.title.simpleText;
+        } else if (headerTitle?.title?.runs?.[0]?.text) {
+          playlistTitle = headerTitle.title.runs[0].text;
+        }
+      }
+
+      // Find tracks via modern lockupViewModel
+      const lockups: any[] = [];
+      findAllDeep(json, "lockupViewModel", lockups);
+
+      if (lockups.length > 0) {
+        playlistVideos = lockups.map((lockup, index) => {
+          const vTitle = lockup.metadata?.lockupMetadataViewModel?.title?.content || "Unknown Track";
+          const uploader = lockup.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows?.[0]?.metadataParts?.[0]?.text?.content || "Unknown Channel";
+          
+          let videoId = "";
+          const findVideoId = (o: any) => {
+            if (!o || typeof o !== "object") return;
+            if (o.videoId && typeof o.videoId === "string") {
+              videoId = o.videoId;
+              return;
+            }
+            for (const k of Object.keys(o)) {
+              findVideoId(o[k]);
+              if (videoId) return;
+            }
+          };
+          findVideoId(lockup);
+
+          const thumbs = lockup.contentImage?.thumbnailViewModel?.image?.sources;
+          const vThumbnail = thumbs?.[thumbs.length - 1]?.url || "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80";
+
+          return {
+            id: videoId || `lockup_${index}`,
+            title: cleanVideoTitle(vTitle),
+            artist: cleanArtistName(uploader, vTitle),
+            duration: "3:30",
+            thumbnail: vThumbnail,
+            status: "pending" as const
+          };
+        });
+      }
+
+      // Fallback to legacy playlistVideoRenderer
+      if (playlistVideos.length === 0) {
+        const legacyVideos: any[] = [];
+        findAllDeep(json, "playlistVideoRenderer", legacyVideos);
+        
+        if (legacyVideos.length > 0) {
+          playlistVideos = legacyVideos.map((renderer, index) => {
             const videoId = renderer.videoId;
-            const videoTitle = renderer.title?.runs?.[0]?.text || "Unknown Track";
+            const vTitle = renderer.title?.runs?.[0]?.text || "Unknown Track";
             const uploader = renderer.shortBylineText?.runs?.[0]?.text || "Unknown Channel";
             const duration = renderer.lengthText?.simpleText || "3:30";
             const thumbs = renderer.thumbnail?.thumbnails;
-            const thumbnail = thumbs?.[thumbs.length - 1]?.url || "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80";
+            const vThumbnail = thumbs?.[thumbs.length - 1]?.url || "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80";
 
             return {
               id: videoId || `video_${index}`,
-              title: cleanVideoTitle(videoTitle),
-              artist: cleanArtistName(uploader, videoTitle),
+              title: cleanVideoTitle(vTitle),
+              artist: cleanArtistName(uploader, vTitle),
               duration: duration,
-              thumbnail: thumbnail,
+              thumbnail: vThumbnail,
               status: "pending" as const
             };
           });
+        }
       }
     } catch (e) {
       console.error("Failed parsing playlist details:", e);
