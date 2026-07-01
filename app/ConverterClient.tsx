@@ -167,9 +167,27 @@ export default function ConverterClient() {
       if (importData) {
         try {
           const decoded = decodeURIComponent(importData);
-          const rawTracks = JSON.parse(decoded);
-          if (Array.isArray(rawTracks)) {
-            const parsedTracks: Song[] = rawTracks.map((track: any, index: number) => ({
+          const parsedPayload = JSON.parse(decoded);
+          
+          let importTitle = "YouTube Automated Mix";
+          let parsedTracks: Song[] = [];
+          
+          if (parsedPayload && typeof parsedPayload === "object" && "tracks" in parsedPayload) {
+            importTitle = parsedPayload.title || "YouTube Automated Mix";
+            const rawTracks = parsedPayload.tracks;
+            if (Array.isArray(rawTracks)) {
+              parsedTracks = rawTracks.map((track: any, index: number) => ({
+                id: track.id || `userscript_import_${index}_${Date.now()}`,
+                title: track.title || "Unknown Track",
+                artist: track.artist || "Unknown Artist",
+                duration: track.duration || "3:30",
+                thumbnail: track.thumbnail || "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80",
+                status: "pending" as const
+              }));
+            }
+          } else if (Array.isArray(parsedPayload)) {
+            // Fallback for old flat array payloads
+            parsedTracks = parsedPayload.map((track: any, index: number) => ({
               id: track.id || `userscript_import_${index}_${Date.now()}`,
               title: track.title || "Unknown Track",
               artist: track.artist || "Unknown Artist",
@@ -177,18 +195,20 @@ export default function ConverterClient() {
               thumbnail: track.thumbnail || "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80",
               status: "pending" as const
             }));
+          }
 
+          if (parsedTracks.length > 0) {
             setScannedPlaylist({
-              playlistName: "YouTube Automated Mix",
+              playlistName: importTitle,
               totalTracks: parsedTracks.length,
               youtubeInfo: {
-                title: "YouTube Automated Mix",
+                title: importTitle,
                 channel: "Browser Automation Scraper",
                 thumbnail: parsedTracks[0]?.thumbnail || "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80"
               },
               tracks: parsedTracks
             });
-            setTargetPlaylistName("My Automated Sync");
+            setTargetPlaylistName(importTitle);
 
             // Select all tracks by default
             const initialSelection: Record<string, boolean> = {};
@@ -202,7 +222,7 @@ export default function ConverterClient() {
             
             // Trigger toast alert asynchronously to allow DOM rendering
             setTimeout(() => {
-              addToast(`Successfully imported ${parsedTracks.length} tracks from YouTube automation!`, "success");
+              addToast(`Successfully imported "${importTitle}" with ${parsedTracks.length} tracks!`, "success");
             }, 500);
           }
         } catch (e) {
@@ -494,7 +514,7 @@ export default function ConverterClient() {
   const setBookmarkletHref = (node: HTMLAnchorElement | null) => {
     if (node) {
       const origin = window.location.origin;
-      node.setAttribute("href", "javascript:(function(){const panel=document.querySelector('#items.playlist-panel-video-list')||document.querySelector('ytd-playlist-panel-renderer #items');const items=document.querySelectorAll('ytd-playlist-panel-video-renderer');if(!items||items.length===0){alert('BetterSync: No songs found on screen. Make sure you are on a YouTube watch/Mix page with the playlist queue panel visible!');return;}const list=Array.from(items).map(item=>{const titleText=item.querySelector('#video-title')?.innerText?.trim();const artistText=item.querySelector('#byline')?.innerText?.trim()||item.querySelector('#byline-container')?.innerText?.trim();const img=item.querySelector('img');const thumb=img?img.src:'';return titleText?{title:titleText,artist:artistText||'Unknown Artist',thumbnail:thumb}:null;}).filter(Boolean);const targetHost='" + origin + "';window.location.replace(targetHost+'/?import='+encodeURIComponent(JSON.stringify(list)));})();");
+      node.setAttribute("href", "javascript:(function(){const panel=document.querySelector('#items.playlist-panel-video-list')||document.querySelector('ytd-playlist-panel-renderer #items');const items=document.querySelectorAll('ytd-playlist-panel-video-renderer');if(!items||items.length===0){alert('BetterSync: No songs found on screen. Make sure you are on a YouTube watch/Mix page with the playlist queue panel visible!');return;}const list=Array.from(items).map(item=>{const titleText=item.querySelector('#video-title')?.innerText?.trim();const artistText=item.querySelector('#byline')?.innerText?.trim()||item.querySelector('#byline-container')?.innerText?.trim();const img=item.querySelector('img');const thumb=img?img.src:'';return titleText?{title:titleText,artist:artistText||'Unknown Artist',thumbnail:thumb}:null;}).filter(Boolean);const mixTitle=document.querySelector('ytd-playlist-panel-renderer #title-text a')?.innerText?.trim()||document.querySelector('ytd-playlist-panel-renderer #title-text')?.innerText?.trim()||document.querySelector('.title.ytd-playlist-panel-renderer')?.innerText?.trim()||'YouTube Mix';const targetHost='" + origin + "';window.location.replace(targetHost+'/?import='+encodeURIComponent(JSON.stringify({title:mixTitle,tracks:list})));})();");
     }
   };
 
