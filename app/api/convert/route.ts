@@ -361,6 +361,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "YouTube URL is required" }, { status: 400 });
       }
 
+      if (url === "https://sentry-test" || url === "sentry-test") {
+        throw new Error("Sentry Backend Serverless Test Error from BetterSync");
+      }
+
       try {
         const scraped = await scrapeYoutubeUrl(url, playlistName);
         return NextResponse.json({
