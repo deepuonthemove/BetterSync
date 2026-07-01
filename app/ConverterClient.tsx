@@ -909,13 +909,31 @@ export default function ConverterClient() {
                       <div style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "var(--text-secondary)", background: "rgba(139, 92, 246, 0.05)", padding: "0.75rem", borderRadius: "8px", border: "1px solid rgba(139, 92, 246, 0.2)", lineHeight: 1.4 }}>
                         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.35rem", color: "var(--accent-violet)", fontWeight: 600 }}>
                           <span>⚡</span>
-                          <span>Zero-Intervention Mix Scraper</span>
+                          <span>YouTube Mix Scraper Automation</span>
                         </div>
                         <div>
-                          Open your Mix automatically with zero manual steps! Just install our 1-click userscript once:
-                          <div style={{ marginTop: "0.5rem" }}>
+                          Choose either option to import your Mix automatically without manual copying:
+                          <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                             <a href="/scraper.user.js" target="_blank" className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem", display: "inline-flex", gap: "0.25rem", width: "auto", height: "auto" }}>
-                              📥 Install 1-Click Scraper Userscript
+                              📥 Install Userscript (Chrome/Brave)
+                            </a>
+                            <a 
+                              href="javascript:(function(){const panel=document.querySelector('#items.playlist-panel-video-list')||document.querySelector('ytd-playlist-panel-renderer #items');const items=document.querySelectorAll('ytd-playlist-panel-video-renderer');if(!items||items.length===0){alert('BetterSync: No songs found on screen. Make sure you are on a YouTube watch/Mix page with the playlist queue panel visible!');return;}const list=Array.from(items).map(item=>{const titleText=item.querySelector('#video-title')?.innerText?.trim();const artistText=item.querySelector('#byline')?.innerText?.trim()||item.querySelector('#byline-container')?.innerText?.trim();const img=item.querySelector('img');const thumb=img?img.src:'';return titleText?{title:titleText,artist:artistText||'Unknown Artist',thumbnail:thumb}:null;}).filter(Boolean);const targetHost=window.location.origin;window.location.replace(targetHost+'/?import='+encodeURIComponent(JSON.stringify(list)));})();"
+                              className="btn btn-glow" 
+                              style={{ 
+                                fontSize: "0.75rem", 
+                                padding: "0.35rem 0.75rem", 
+                                display: "inline-flex", 
+                                gap: "0.25rem", 
+                                width: "auto", 
+                                height: "auto",
+                                border: "1px dashed var(--accent-violet)"
+                              }}
+                              onClick={(e) => {
+                                alert("BetterSync Bookmarklet:\n\nDrag this button to your browser's Bookmarks Bar.\nThen, when you are watching your YouTube Mix, click it to automatically sync all tracks to BetterSync!");
+                              }}
+                            >
+                              ⭐ Drag to Bookmarks Bar (No Extensions!)
                             </a>
                           </div>
                         </div>
@@ -959,17 +977,39 @@ export default function ConverterClient() {
                     <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", background: "rgba(255,255,255,0.01)", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-color)", lineHeight: 1.4 }}>
                       💡 <strong>Want 100% Automated YouTube Mix Sync?</strong>
                       <div style={{ marginTop: "0.35rem" }}>
-                        Instead of manual lists or copy-pasting code, you can automate this in 1 click:
-                        <ol style={{ paddingLeft: "1.25rem", marginTop: "0.35rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                          <li>Install a browser userscript manager extension like <strong>Tampermonkey</strong> or <strong>Violentmonkey</strong>.</li>
-                          <li>Click below to install our official scraper userscript (1-click setup):
-                            <div style={{ marginTop: "0.35rem" }}>
+                        Instead of manual lists, choose either method to automate mix syncing:
+                        <ol style={{ paddingLeft: "1.25rem", marginTop: "0.35rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                          <li>
+                            <strong>Option A (Userscript):</strong> Install Tampermonkey, then click below to add our official script:
+                            <div style={{ marginTop: "0.25rem" }}>
                               <a href="/scraper.user.js" target="_blank" className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem", display: "inline-flex", gap: "0.25rem", width: "auto", height: "auto" }}>
                                 📥 Install Scraper Userscript
                               </a>
                             </div>
                           </li>
-                          <li>Go back to the <strong>YouTube Link</strong> tab, paste your Mix URL, and click <strong>Automate Mix</strong>. The browser will auto-sync without any other steps!</li>
+                          <li>
+                            <strong>Option B (Bookmarklet - No Extensions!):</strong> Drag the button below to your Bookmarks Bar. When playing a YouTube Mix, click it to sync instantly:
+                            <div style={{ marginTop: "0.25rem" }}>
+                              <a 
+                                href="javascript:(function(){const panel=document.querySelector('#items.playlist-panel-video-list')||document.querySelector('ytd-playlist-panel-renderer #items');const items=document.querySelectorAll('ytd-playlist-panel-video-renderer');if(!items||items.length===0){alert('BetterSync: No songs found on screen. Make sure you are on a YouTube watch/Mix page with the playlist queue panel visible!');return;}const list=Array.from(items).map(item=>{const titleText=item.querySelector('#video-title')?.innerText?.trim();const artistText=item.querySelector('#byline')?.innerText?.trim()||item.querySelector('#byline-container')?.innerText?.trim();const img=item.querySelector('img');const thumb=img?img.src:'';return titleText?{title:titleText,artist:artistText||'Unknown Artist',thumbnail:thumb}:null;}).filter(Boolean);const targetHost=window.location.origin;window.location.replace(targetHost+'/?import='+encodeURIComponent(JSON.stringify(list)));})();"
+                                className="btn btn-glow" 
+                                style={{ 
+                                  fontSize: "0.75rem", 
+                                  padding: "0.35rem 0.75rem", 
+                                  display: "inline-flex", 
+                                  gap: "0.25rem", 
+                                  width: "auto", 
+                                  height: "auto",
+                                  border: "1px dashed var(--accent-violet)"
+                                }}
+                                onClick={(e) => {
+                                  alert("BetterSync Bookmarklet:\n\nDrag this button to your browser's Bookmarks Bar.\nThen, when you are watching your YouTube Mix, click it to automatically sync all tracks to BetterSync!");
+                                }}
+                              >
+                                ⭐ Drag to Bookmarks Bar
+                              </a>
+                            </div>
+                          </li>
                         </ol>
                       </div>
                     </div>
