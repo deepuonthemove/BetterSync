@@ -160,6 +160,59 @@ export default function ConverterClient() {
     return () => window.removeEventListener("focus", handleFocus);
   }, [session]);
 
+  // Read URL query parameter "?import=" to load data sent from the Browser automation Userscript
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const importData = searchParams.get("import");
+      if (importData) {
+        try {
+          const decoded = decodeURIComponent(importData);
+          const rawTracks = JSON.parse(decoded);
+          if (Array.isArray(rawTracks)) {
+            const parsedTracks: Song[] = rawTracks.map((track: any, index: number) => ({
+              id: track.id || `userscript_import_${index}_${Date.now()}`,
+              title: track.title || "Unknown Track",
+              artist: track.artist || "Unknown Artist",
+              duration: track.duration || "3:30",
+              thumbnail: track.thumbnail || "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80",
+              status: "pending" as const
+            }));
+
+            setScannedPlaylist({
+              playlistName: "YouTube Automated Mix",
+              totalTracks: parsedTracks.length,
+              youtubeInfo: {
+                title: "YouTube Automated Mix",
+                channel: "Browser Automation Scraper",
+                thumbnail: parsedTracks[0]?.thumbnail || "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80"
+              },
+              tracks: parsedTracks
+            });
+            setTargetPlaylistName("My Automated Sync");
+
+            // Select all tracks by default
+            const initialSelection: Record<string, boolean> = {};
+            parsedTracks.forEach((t) => {
+              initialSelection[t.id] = true;
+            });
+            setSelectedTracks(initialSelection);
+
+            // Clean URL query parameters to look neat
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Trigger toast alert asynchronously to allow DOM rendering
+            setTimeout(() => {
+              addToast(`Successfully imported ${parsedTracks.length} tracks from YouTube automation!`, "success");
+            }, 500);
+          }
+        } catch (e) {
+          console.error("Failed to parse automation import payload:", e);
+        }
+      }
+    }
+  }, []);
+
   // Helpers for adding toast alerts
   const addToast = (message: string, type: "success" | "error" | "info" = "success") => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -360,6 +413,67 @@ export default function ConverterClient() {
     } finally {
       setIsScanning(false);
     }
+  };
+
+  // Automated browser mix capture pipeline (copies extractor script and opens YouTube tab)
+  const handleAutomateMixCapture = () => {
+    if (!url) {
+      addToast("Please enter a YouTube Mix URL first.", "error");
+      return;
+    }
+    
+    // Scraper code that runs on YouTube watch page, reads DOM, and redirects back to site
+    const scriptCode = `(async () => {
+      console.log('Starting BetterSync Automation...');
+      
+      // Auto scroll playlist panel to trigger lazy loading of all 50 tracks
+      const panel = document.querySelector('#items.playlist-panel-video-list');
+      if (panel) {
+        panel.scrollTo(0, panel.scrollHeight);
+        await new Promise(r => setTimeout(r, 1000));
+        panel.scrollTo(0, panel.scrollHeight);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      
+      const items = document.querySelectorAll('ytd-playlist-panel-video-renderer');
+      const list = Array.from(items).map(item => {
+        const titleText = item.querySelector('#video-title')?.innerText?.trim();
+        const artistText = item.querySelector('#byline')?.innerText?.trim() || item.querySelector('#byline-container')?.innerText?.trim();
+        const img = item.querySelector('img');
+        const thumb = img ? img.src : '';
+        return titleText ? { title: titleText, artist: artistText || 'Unknown Artist', thumbnail: thumb } : null;
+      }).filter(Boolean);
+      
+      if (list.length === 0) {
+        alert('Automation Error: No songs found on screen. Make sure the Mix playlist panel is open!');
+        return;
+      }
+      
+      const siteUrl = "${window.location.origin}/?import=" + encodeURIComponent(JSON.stringify(list));
+      window.open(siteUrl, '_self');
+    })();`;
+
+    navigator.clipboard.writeText(scriptCode).then(() => {
+      addToast("Automation script copied! Opening YouTube...", "info");
+      
+      // Open YouTube Mix URL
+      window.open(url, "_blank");
+      
+      // Show instructional alert to user
+      setTimeout(() => {
+        alert(
+          "BetterSync Mix Automation Guide:\\n\\n" +
+          "1. We opened the YouTube Mix in a new tab.\\n" +
+          "2. We copied the automation script to your clipboard.\\n" +
+          "3. In the new YouTube tab, press F12 (or right-click -> Inspect) to open Developer Tools.\\n" +
+          "4. Click the 'Console' tab, paste (Ctrl+V or Cmd+V) the code, and press Enter.\\n\\n" +
+          "The script will auto-extract all tracks (including scrolling) and redirect you back here with the full list populated!"
+        );
+      }, 500);
+    }).catch((e) => {
+      console.error(e);
+      addToast("Failed to copy automation script to clipboard.", "error");
+    });
   };
 
   // Toggle single track selection checkmarks
@@ -810,22 +924,40 @@ export default function ConverterClient() {
                         className="form-input"
                         disabled={isScanning || isConverting}
                       />
-                      <button 
-                        onClick={handleScanPlaylist}
-                        disabled={isScanning || isConverting}
-                        className="btn btn-glow"
-                        style={{ flexShrink: 0 }}
-                      >
-                        {isScanning ? (
-                          <>
-                            <Loader2 size={16} className="loading-spinner" />
-                            Scanning...
-                          </>
-                        ) : (
-                          "Scan Playlist"
-                        )}
-                      </button>
+                      {(url.includes("list=RD") || url.includes("list=LM")) ? (
+                        <button 
+                          onClick={handleAutomateMixCapture}
+                          disabled={isScanning || isConverting}
+                          className="btn btn-glow"
+                          style={{ flexShrink: 0, background: "var(--accent-gradient)" }}
+                        >
+                          ⚡ Automate Mix
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={handleScanPlaylist}
+                          disabled={isScanning || isConverting}
+                          className="btn btn-glow"
+                          style={{ flexShrink: 0 }}
+                        >
+                          {isScanning ? (
+                            <>
+                              <Loader2 size={16} className="loading-spinner" />
+                              Scanning...
+                            </>
+                          ) : (
+                            "Scan Playlist"
+                          )}
+                        </button>
+                      )}
                     </div>
+
+                    {(url.includes("list=RD") || url.includes("list=LM")) && (
+                      <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--accent-violet)", display: "flex", gap: "0.35rem", alignItems: "center" }}>
+                        <span>⚠️</span>
+                        <span>YouTube Mix detected. Click <strong>Automate Mix</strong> to copy the browser scraper and capture your active login's queue!</span>
+                      </div>
+                    )}
                     
                     {/* Presets */}
                     <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.75rem", alignItems: "center" }}>
