@@ -1,6 +1,7 @@
 "use client";
 
 import "../sentry.client.config";
+import * as Sentry from "@sentry/nextjs";
 import React, { useState, useEffect } from "react";
 import { 
   ArrowRight, 
@@ -352,6 +353,7 @@ export default function ConverterClient() {
       const data = await response.json();
       
       if (response.ok) {
+        Sentry.metrics.count("playlist_scanned_success", 1);
         setScannedPlaylist(data);
         setTargetPlaylistName(data.playlistName);
         
@@ -363,6 +365,7 @@ export default function ConverterClient() {
         setSelectedTracks(initialSelection);
         addToast(`Successfully parsed ${data.tracks.length} tracks from YouTube page!`, "success");
       } else {
+        Sentry.metrics.count("playlist_scanned_failed", 1);
         addToast(data.error || "Failed to parse YouTube page details.", "error");
       }
     } finally {
@@ -504,12 +507,18 @@ export default function ConverterClient() {
             return nextSel;
           });
 
+          const successCount = resultData.tracks?.filter((t: any) => t.status === "matched").length || 0;
+          const accuracy = Math.round((successCount / (resultData.tracks?.length || 1)) * 100);
+          Sentry.metrics.count("playlist_transferred_success", 1);
+          Sentry.metrics.distribution("transfer_accuracy", accuracy);
+
           setIsConverting(false);
           addToast("Playlist transfer completed successfully!", "success");
         }
       }, 300);
 
     } catch (err) {
+      Sentry.metrics.count("playlist_transferred_failed", 1);
       setIsConverting(false);
       addToast("Connection error during transfer.", "error");
     }
@@ -842,6 +851,7 @@ export default function ConverterClient() {
                       <button 
                         onClick={() => {
                           addToast("Throwing Sentry test error...", "info");
+                          Sentry.metrics.count('test_metric', 1);
                           setTimeout(() => {
                             throw new Error("Sentry Test Error from BetterSync Dashboard");
                           }, 100);

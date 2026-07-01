@@ -369,6 +369,7 @@ export async function POST(request: NextRequest) {
 
       try {
         const scraped = await scrapeYoutubeUrl(url, playlistName);
+        Sentry.metrics.count("backend_scans_success", 1);
         return NextResponse.json({
           mode: "database_live",
           playlistName: scraped.playlistName,
@@ -377,6 +378,7 @@ export async function POST(request: NextRequest) {
           youtubeInfo: scraped.youtubeInfo
         });
       } catch (err: any) {
+        Sentry.metrics.count("backend_scans_failed", 1);
         Sentry.captureException(err);
         console.error("YouTube scraping error:", err);
         return NextResponse.json(
@@ -524,6 +526,9 @@ export async function POST(request: NextRequest) {
         }
 
         const successCount = updatedTracks.filter((t) => t.status === "matched").length;
+        const accuracy = Math.round((successCount / updatedTracks.length) * 100);
+        Sentry.metrics.count("backend_transfers_success", 1);
+        Sentry.metrics.distribution("backend_transfer_accuracy", accuracy);
 
         return NextResponse.json({
           success: true,
@@ -533,11 +538,12 @@ export async function POST(request: NextRequest) {
             total: updatedTracks.length,
             transferred: successCount,
             failed: updatedTracks.length - successCount,
-            accuracy: Math.round((successCount / updatedTracks.length) * 100),
+            accuracy: accuracy,
           },
           tracks: updatedTracks
         });
       } catch (err: any) {
+        Sentry.metrics.count("backend_transfers_failed", 1);
         Sentry.captureException(err);
         console.error("Spotify API process error:", err);
         return NextResponse.json({ error: err.message || "Failed to complete Spotify sync." }, { status: 500 });
