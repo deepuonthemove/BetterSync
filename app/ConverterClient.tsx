@@ -415,65 +415,18 @@ export default function ConverterClient() {
     }
   };
 
-  // Automated browser mix capture pipeline (copies extractor script and opens YouTube tab)
+  // Automated browser mix capture pipeline (triggers userscript on YouTube watch page)
   const handleAutomateMixCapture = () => {
     if (!url) {
       addToast("Please enter a YouTube Mix URL first.", "error");
       return;
     }
     
-    // Scraper code that runs on YouTube watch page, reads DOM, and redirects back to site
-    const scriptCode = `(async () => {
-      console.log('Starting BetterSync Automation...');
-      
-      // Auto scroll playlist panel to trigger lazy loading of all 50 tracks
-      const panel = document.querySelector('#items.playlist-panel-video-list');
-      if (panel) {
-        panel.scrollTo(0, panel.scrollHeight);
-        await new Promise(r => setTimeout(r, 1000));
-        panel.scrollTo(0, panel.scrollHeight);
-        await new Promise(r => setTimeout(r, 1000));
-      }
-      
-      const items = document.querySelectorAll('ytd-playlist-panel-video-renderer');
-      const list = Array.from(items).map(item => {
-        const titleText = item.querySelector('#video-title')?.innerText?.trim();
-        const artistText = item.querySelector('#byline')?.innerText?.trim() || item.querySelector('#byline-container')?.innerText?.trim();
-        const img = item.querySelector('img');
-        const thumb = img ? img.src : '';
-        return titleText ? { title: titleText, artist: artistText || 'Unknown Artist', thumbnail: thumb } : null;
-      }).filter(Boolean);
-      
-      if (list.length === 0) {
-        alert('Automation Error: No songs found on screen. Make sure the Mix playlist panel is open!');
-        return;
-      }
-      
-      const siteUrl = "${window.location.origin}/?import=" + encodeURIComponent(JSON.stringify(list));
-      window.open(siteUrl, '_self');
-    })();`;
-
-    navigator.clipboard.writeText(scriptCode).then(() => {
-      addToast("Automation script copied! Opening YouTube...", "info");
-      
-      // Open YouTube Mix URL
-      window.open(url, "_blank");
-      
-      // Show instructional alert to user
-      setTimeout(() => {
-        alert(
-          "BetterSync Mix Automation Guide:\\n\\n" +
-          "1. We opened the YouTube Mix in a new tab.\\n" +
-          "2. We copied the automation script to your clipboard.\\n" +
-          "3. In the new YouTube tab, press F12 (or right-click -> Inspect) to open Developer Tools.\\n" +
-          "4. Click the 'Console' tab, paste (Ctrl+V or Cmd+V) the code, and press Enter.\\n\\n" +
-          "The script will auto-extract all tracks (including scrolling) and redirect you back here with the full list populated!"
-        );
-      }, 500);
-    }).catch((e) => {
-      console.error(e);
-      addToast("Failed to copy automation script to clipboard.", "error");
-    });
+    const connector = url.includes("?") ? "&" : "?";
+    const automatedUrl = url + connector + "bettersync=true";
+    
+    addToast("Launching automated mix scraper...", "info");
+    window.open(automatedUrl, "_blank");
   };
 
   // Toggle single track selection checkmarks
@@ -953,9 +906,19 @@ export default function ConverterClient() {
                     </div>
 
                     {(url.includes("list=RD") || url.includes("list=LM")) && (
-                      <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--accent-violet)", display: "flex", gap: "0.35rem", alignItems: "center" }}>
-                        <span>⚠️</span>
-                        <span>YouTube Mix detected. Click <strong>Automate Mix</strong> to copy the browser scraper and capture your active login's queue!</span>
+                      <div style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "var(--text-secondary)", background: "rgba(139, 92, 246, 0.05)", padding: "0.75rem", borderRadius: "8px", border: "1px solid rgba(139, 92, 246, 0.2)", lineHeight: 1.4 }}>
+                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.35rem", color: "var(--accent-violet)", fontWeight: 600 }}>
+                          <span>⚡</span>
+                          <span>Zero-Intervention Mix Scraper</span>
+                        </div>
+                        <div>
+                          Open your Mix automatically with zero manual steps! Just install our 1-click userscript once:
+                          <div style={{ marginTop: "0.5rem" }}>
+                            <a href="/scraper.user.js" target="_blank" className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem", display: "inline-flex", gap: "0.25rem", width: "auto", height: "auto" }}>
+                              📥 Install 1-Click Scraper Userscript
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     )}
                     
@@ -994,24 +957,21 @@ export default function ConverterClient() {
                     </button>
 
                     <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", background: "rgba(255,255,255,0.01)", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-color)", lineHeight: 1.4 }}>
-                      💡 <strong>How to get the exact tracks in your YouTube Mix:</strong>
-                      <ol style={{ paddingLeft: "1.25rem", marginTop: "0.25rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                        <li>Open the Mix page on YouTube in your browser.</li>
-                        <li>Press <code>F12</code> (or right-click and select <strong>Inspect</strong>), then click the <strong>Console</strong> tab.</li>
-                        <li>Paste the code below and press <code>Enter</code> (it automatically extracts all items in your queue and copies them to your clipboard):
-                          <pre style={{ margin: "0.5rem 0", padding: "0.5rem", background: "rgba(0,0,0,0.5)", borderRadius: "6px", overflowX: "auto", fontSize: "0.7rem", color: "var(--accent-violet)", fontFamily: "var(--font-mono)" }}>
-{`const items = document.querySelectorAll('ytd-playlist-panel-video-renderer');
-const list = Array.from(items).map(item => {
-  const title = item.querySelector('#video-title')?.innerText?.trim();
-  const artist = item.querySelector('#byline')?.innerText?.trim();
-  return title && artist ? \`\${title} - \${artist}\` : null;
-}).filter(Boolean);
-copy(list.join('\\n'));
-console.log(\`Copied \${list.length} tracks to clipboard!\`);`}
-                          </pre>
-                        </li>
-                        <li>Focus the text box above and paste (<code>Ctrl+V</code> or <code>Cmd+V</code>), then click **Import Track List**!</li>
-                      </ol>
+                      💡 <strong>Want 100% Automated YouTube Mix Sync?</strong>
+                      <div style={{ marginTop: "0.35rem" }}>
+                        Instead of manual lists or copy-pasting code, you can automate this in 1 click:
+                        <ol style={{ paddingLeft: "1.25rem", marginTop: "0.35rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                          <li>Install a browser userscript manager extension like <strong>Tampermonkey</strong> or <strong>Violentmonkey</strong>.</li>
+                          <li>Click below to install our official scraper userscript (1-click setup):
+                            <div style={{ marginTop: "0.35rem" }}>
+                              <a href="/scraper.user.js" target="_blank" className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem", display: "inline-flex", gap: "0.25rem", width: "auto", height: "auto" }}>
+                                📥 Install Scraper Userscript
+                              </a>
+                            </div>
+                          </li>
+                          <li>Go back to the <strong>YouTube Link</strong> tab, paste your Mix URL, and click <strong>Automate Mix</strong>. The browser will auto-sync without any other steps!</li>
+                        </ol>
+                      </div>
                     </div>
                   </div>
                 )}
