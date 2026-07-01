@@ -245,14 +245,14 @@ export default function ConverterClient() {
   const loadPreset = (presetType: "lofi" | "synthwave" | "acoustic") => {
     let presetUrl = "";
     if (presetType === "lofi") {
-      presetUrl = "https://www.youtube.com/playlist?list=PL6NDKXsPL0_IaXF5H4XJgHti_ip-tNsqt";
+      presetUrl = "https://www.youtube.com/playlist?list=PLl0aojpx_maChreq1MOnCgfbn8uKqY3a-";
     } else if (presetType === "synthwave") {
-      presetUrl = "https://www.youtube.com/playlist?list=PL3oW2tjiIxvQ1K_Vrs7fV78sW75X_Wj6W";
+      presetUrl = "https://www.youtube.com/playlist?list=PLLgDeRqUYWY3g7lJGMmt7S6615yuBOanI";
     } else if (presetType === "acoustic") {
-      presetUrl = "https://www.youtube.com/playlist?list=PLVvJk1a9e9tH0wXqOqO6mQpEqi_Eee6Kk";
+      presetUrl = "https://www.youtube.com/playlist?list=PLw-VjB5V4Y1Uv-3n4N8g8mN44y0fA5f-A";
     }
     setUrl(presetUrl);
-    addToast(`Selected public ${presetType === "lofi" ? "Lofi Chill" : presetType === "synthwave" ? "Synthwave Drive" : "Acoustic Cozy"} Playlist URL.`, "info");
+    addToast(`Selected public ${presetType === "lofi" ? "Lofi Cozy" : presetType === "synthwave" ? "Synthwave Drive" : "Acoustic Cozy"} Playlist URL.`, "info");
   };
 
   // Connect & Log in handlers using real Better Auth redirect flows in a new tab
