@@ -6,6 +6,6 @@ Sentry.init({
   // Track performance metrics for API routing and serverside processing
   tracesSampleRate: 1.0,
 
-  // Suppress initialization debug logs
-  debug: false,
+  // Enable verbose debug logs to trace connection issues
+  debug: true,
 });

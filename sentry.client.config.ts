@@ -10,6 +10,6 @@ Sentry.init({
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
 
-  // Suppress initialization debug logs
-  debug: false,
+  // Enable verbose debug logs to trace connection issues
+  debug: true,
 });
