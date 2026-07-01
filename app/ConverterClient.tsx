@@ -96,6 +96,8 @@ export default function ConverterClient() {
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
   const [activePlaylistUrl, setActivePlaylistUrl] = useState<string | null>(null);
   const [showUpiModal, setShowUpiModal] = useState(false);
+  const [importMode, setImportMode] = useState<"url" | "text">("url");
+  const [textList, setTextList] = useState("");
 
   // Toast Notification HUD State
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "info" }[]>([]);
@@ -286,8 +288,75 @@ export default function ConverterClient() {
       } else {
         addToast(data.error || "Failed to parse YouTube page details.", "error");
       }
-    } catch (err) {
-      addToast("Connection error while scanning.", "error");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Import custom text list of tracks (e.g. from YouTube Mix Console Scraper)
+  const handleImportTextList = () => {
+    if (!textList.trim()) {
+      addToast("Please enter at least one track to import.", "error");
+      return;
+    }
+    setIsScanning(true);
+    setScannedPlaylist(null);
+    setConvertedResult(null);
+    setActivePlaylistId(null);
+    setActivePlaylistUrl(null);
+
+    try {
+      const lines = textList.split("\n").map(l => l.trim()).filter(Boolean);
+      const parsedTracks: Song[] = lines.map((line, index) => {
+        let title = line;
+        let artist = "Unknown Artist";
+        
+        const splitters = [" - ", " – ", " — ", "\t", " by "];
+        for (const splitter of splitters) {
+          const parts = line.split(splitter);
+          if (parts.length > 1) {
+            title = parts[0].trim();
+            artist = parts.slice(1).join(splitter).trim();
+            break;
+          }
+        }
+
+        return {
+          id: `text_import_${index}_${Date.now()}`,
+          title: title,
+          artist: artist,
+          duration: "3:30",
+          thumbnail: "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80",
+          status: "pending" as const
+        };
+      });
+
+      if (parsedTracks.length === 0) {
+        throw new Error("No valid tracks parsed from the list.");
+      }
+
+      setScannedPlaylist({
+        playlistName: "Custom Import List",
+        totalTracks: parsedTracks.length,
+        youtubeInfo: {
+          title: "Custom Import",
+          channel: "Local User",
+          thumbnail: "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=120&h=120&q=80"
+        },
+        tracks: parsedTracks
+      });
+      setTargetPlaylistName("My Custom Sync");
+
+      // Select all by default
+      const initialSelection: Record<string, boolean> = {};
+      parsedTracks.forEach((track) => {
+        initialSelection[track.id] = true;
+      });
+      setSelectedTracks(initialSelection);
+
+      addToast(`Successfully imported ${parsedTracks.length} tracks!`, "success");
+    } catch (e: any) {
+      addToast(e.message || "Failed to import track list.", "error");
     } finally {
       setIsScanning(false);
     }
@@ -691,46 +760,129 @@ export default function ConverterClient() {
                   <span style={{ display: "inline-flex", background: "rgba(255,255,255,0.05)", padding: "0.35rem", borderRadius: "6px" }}><Sparkles size={16} /></span>
                   2. Playlist Extraction & Transfer
                 </h3>
+                {/* Tab selectors */}
+                <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", borderBottom: "1px solid var(--border-color)", paddingBottom: "0.5rem" }}>
+                  <button 
+                    onClick={() => setImportMode("url")} 
+                    style={{ 
+                      background: "none", 
+                      border: "none", 
+                      color: importMode === "url" ? "var(--accent-violet)" : "var(--text-secondary)", 
+                      fontWeight: importMode === "url" ? 600 : 400,
+                      borderBottom: importMode === "url" ? "2px solid var(--accent-violet)" : "none",
+                      paddingBottom: "0.5rem",
+                      cursor: "pointer",
+                      fontSize: "0.85rem",
+                      transition: "var(--transition-smooth)"
+                    }}
+                  >
+                    YouTube Link
+                  </button>
+                  <button 
+                    onClick={() => setImportMode("text")} 
+                    style={{ 
+                      background: "none", 
+                      border: "none", 
+                      color: importMode === "text" ? "var(--accent-violet)" : "var(--text-secondary)", 
+                      fontWeight: importMode === "text" ? 600 : 400,
+                      borderBottom: importMode === "text" ? "2px solid var(--accent-violet)" : "none",
+                      paddingBottom: "0.5rem",
+                      cursor: "pointer",
+                      fontSize: "0.85rem",
+                      transition: "var(--transition-smooth)"
+                    }}
+                  >
+                    Text List Import
+                  </button>
+                </div>
 
-                {/* URL Paste input */}
-                <div style={{ marginBottom: "2rem" }}>
-                  <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "0.5rem", fontWeight: 500 }}>
-                    Enter YouTube Video, Playlist or Mix URL
-                  </label>
-                  <div style={{ display: "flex", gap: "0.75rem" }}>
-                    <input 
-                      type="text" 
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      placeholder="https://www.youtube.com/playlist?list=PL6NDKXsPL0_IaXF5H4XJgHti_ip-tNsqt" 
-                      className="form-input"
-                      disabled={isScanning || isConverting}
-                    />
+                {importMode === "url" ? (
+                  <div style={{ marginBottom: "2rem" }}>
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "0.5rem", fontWeight: 500 }}>
+                      Enter YouTube Video, Playlist or Mix URL
+                    </label>
+                    <div style={{ display: "flex", gap: "0.75rem" }}>
+                      <input 
+                        type="text" 
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        placeholder="https://www.youtube.com/playlist?list=PL6NDKXsPL0_IaXF5H4XJgHti_ip-tNsqt" 
+                        className="form-input"
+                        disabled={isScanning || isConverting}
+                      />
+                      <button 
+                        onClick={handleScanPlaylist}
+                        disabled={isScanning || isConverting}
+                        className="btn btn-glow"
+                        style={{ flexShrink: 0 }}
+                      >
+                        {isScanning ? (
+                          <>
+                            <Loader2 size={16} className="loading-spinner" />
+                            Scanning...
+                          </>
+                        ) : (
+                          "Scan Playlist"
+                        )}
+                      </button>
+                    </div>
+                    
+                    {/* Presets */}
+                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.75rem", alignItems: "center" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginRight: "0.25rem" }}>Quick Test Public Playlists:</span>
+                      <button onClick={() => loadPreset("lofi")} className="badge nav-link" style={{ cursor: "pointer", border: "1px dashed var(--border-color)" }}>🎵 Lofi Study Beats</button>
+                      <button onClick={() => loadPreset("synthwave")} className="badge nav-link" style={{ cursor: "pointer", border: "1px dashed var(--border-color)" }}>⚡ Synthwave Retro</button>
+                      <button onClick={() => loadPreset("acoustic")} className="badge nav-link" style={{ cursor: "pointer", border: "1px dashed var(--border-color)" }}>🎸 Acoustic Cozy</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: "2rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "0.5rem", fontWeight: 500 }}>
+                        Paste Tracks List (one song per line, format: <code>Song - Artist</code>)
+                      </label>
+                      <textarea 
+                        value={textList}
+                        onChange={(e) => setTextList(e.target.value)}
+                        placeholder="Centuries - Fall Out Boy&#10;Glitter & Gold - Barns Courtney&#10;Radioactive - Imagine Dragons" 
+                        className="form-input"
+                        rows={5}
+                        style={{ fontFamily: "inherit", resize: "vertical", minHeight: "120px" }}
+                        disabled={isScanning || isConverting}
+                      />
+                    </div>
+                    
                     <button 
-                      onClick={handleScanPlaylist}
+                      onClick={handleImportTextList}
                       disabled={isScanning || isConverting}
                       className="btn btn-glow"
-                      style={{ flexShrink: 0 }}
+                      style={{ width: "100%", justifyContent: "center" }}
                     >
-                      {isScanning ? (
-                        <>
-                          <Loader2 size={16} className="loading-spinner" />
-                          Scanning...
-                        </>
-                      ) : (
-                        "Scan Playlist"
-                      )}
+                      Import Track List
                     </button>
+
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", background: "rgba(255,255,255,0.01)", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-color)", lineHeight: 1.4 }}>
+                      💡 <strong>How to get the exact tracks in your YouTube Mix:</strong>
+                      <ol style={{ paddingLeft: "1.25rem", marginTop: "0.25rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                        <li>Open the Mix page on YouTube in your browser.</li>
+                        <li>Press <code>F12</code> (or right-click and select <strong>Inspect</strong>), then click the <strong>Console</strong> tab.</li>
+                        <li>Paste the code below and press <code>Enter</code> (it automatically extracts all items in your queue and copies them to your clipboard):
+                          <pre style={{ margin: "0.5rem 0", padding: "0.5rem", background: "rgba(0,0,0,0.5)", borderRadius: "6px", overflowX: "auto", fontSize: "0.7rem", color: "var(--accent-violet)", fontFamily: "var(--font-mono)" }}>
+{`const items = document.querySelectorAll('ytd-playlist-panel-video-renderer');
+const list = Array.from(items).map(item => {
+  const title = item.querySelector('#video-title')?.innerText?.trim();
+  const artist = item.querySelector('#byline')?.innerText?.trim();
+  return title && artist ? \`\${title} - \${artist}\` : null;
+}).filter(Boolean);
+copy(list.join('\\n'));
+console.log(\`Copied \${list.length} tracks to clipboard!\`);`}
+                          </pre>
+                        </li>
+                        <li>Focus the text box above and paste (<code>Ctrl+V</code> or <code>Cmd+V</code>), then click **Import Track List**!</li>
+                      </ol>
+                    </div>
                   </div>
-                  
-                  {/* Presets */}
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.75rem", alignItems: "center" }}>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginRight: "0.25rem" }}>Quick Test Public Playlists:</span>
-                    <button onClick={() => loadPreset("lofi")} className="badge nav-link" style={{ cursor: "pointer", border: "1px dashed var(--border-color)" }}>🎵 Lofi Study Beats</button>
-                    <button onClick={() => loadPreset("synthwave")} className="badge nav-link" style={{ cursor: "pointer", border: "1px dashed var(--border-color)" }}>⚡ Synthwave Retro</button>
-                    <button onClick={() => loadPreset("acoustic")} className="badge nav-link" style={{ cursor: "pointer", border: "1px dashed var(--border-color)" }}>🎸 Acoustic Cozy</button>
-                  </div>
-                </div>
+                )}
 
                 {/* SKELETON LOADER SCREEN */}
                 {isScanning && (
