@@ -834,6 +834,19 @@ export default function ConverterClient() {
                       <button onClick={() => loadPreset("lofi")} className="badge nav-link" style={{ cursor: "pointer", border: "1px dashed var(--border-color)" }}>🎵 Lofi Study Beats</button>
                       <button onClick={() => loadPreset("synthwave")} className="badge nav-link" style={{ cursor: "pointer", border: "1px dashed var(--border-color)" }}>⚡ Synthwave Retro</button>
                       <button onClick={() => loadPreset("acoustic")} className="badge nav-link" style={{ cursor: "pointer", border: "1px dashed var(--border-color)" }}>🎸 Acoustic Cozy</button>
+                      <button 
+                        onClick={() => {
+                          addToast("Throwing Sentry test error...", "info");
+                          setTimeout(() => {
+                            throw new Error("Sentry Test Error from BetterSync Dashboard");
+                          }, 100);
+                        }} 
+                        className="badge nav-link" 
+                        style={{ cursor: "pointer", border: "1px dashed rgba(239, 68, 68, 0.4)", color: "#ef4444" }}
+                        title="Throws a test error to verify Sentry setup"
+                      >
+                        🐞 Test Sentry
+                      </button>
                     </div>
                   )}
 
