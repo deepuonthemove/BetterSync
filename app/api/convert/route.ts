@@ -367,6 +367,18 @@ export async function POST(request: NextRequest) {
         throw new Error("Sentry Backend Serverless Test Error from BetterSync");
       }
 
+      // Backend URL validation
+      try {
+        const parsedUrl = new URL(url.trim());
+        const hostname = parsedUrl.hostname.toLowerCase();
+        const isYoutube = hostname.endsWith("youtube.com") || hostname === "youtu.be" || hostname.endsWith("youtube-nocookie.com");
+        if (!isYoutube) {
+          return NextResponse.json({ error: "Invalid domain. Please enter a valid YouTube playlist or video URL." }, { status: 400 });
+        }
+      } catch (_) {
+        return NextResponse.json({ error: "Invalid URL format. Please enter a complete URL starting with http:// or https://" }, { status: 400 });
+      }
+
       try {
         const scraped = await scrapeYoutubeUrl(url, playlistName);
         Sentry.metrics.count("backend_scans_success", 1);

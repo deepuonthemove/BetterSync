@@ -338,6 +338,22 @@ export default function ConverterClient() {
       addToast("Please enter or select a YouTube URL first.", "error");
       return;
     }
+
+    // Explicit URL Validation check
+    let parsedUrl: URL | null = null;
+    try {
+      parsedUrl = new URL(url.trim());
+    } catch (_) {
+      addToast("Invalid URL format. Please enter a complete URL starting with http:// or https://", "error");
+      return;
+    }
+
+    const hostname = parsedUrl.hostname.toLowerCase();
+    const isYoutube = hostname.endsWith("youtube.com") || hostname === "youtu.be" || hostname.endsWith("youtube-nocookie.com");
+    if (!isYoutube) {
+      addToast("Domain not supported. Please enter a valid YouTube URL (e.g. youtube.com/playlist?list=...)", "error");
+      return;
+    }
     setIsScanning(true);
     setScannedPlaylist(null);
     setConvertedResult(null);
