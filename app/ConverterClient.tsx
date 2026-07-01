@@ -559,6 +559,13 @@ export default function ConverterClient() {
     }
   };
 
+  // Helper callback ref to inject javascript: bookmarklet URL directly into DOM to bypass React security filters
+  const setBookmarkletHref = (node: HTMLAnchorElement | null) => {
+    if (node) {
+      node.setAttribute("href", "javascript:(function(){const panel=document.querySelector('#items.playlist-panel-video-list')||document.querySelector('ytd-playlist-panel-renderer #items');const items=document.querySelectorAll('ytd-playlist-panel-video-renderer');if(!items||items.length===0){alert('BetterSync: No songs found on screen. Make sure you are on a YouTube watch/Mix page with the playlist queue panel visible!');return;}const list=Array.from(items).map(item=>{const titleText=item.querySelector('#video-title')?.innerText?.trim();const artistText=item.querySelector('#byline')?.innerText?.trim()||item.querySelector('#byline-container')?.innerText?.trim();const img=item.querySelector('img');const thumb=img?img.src:'';return titleText?{title:titleText,artist:artistText||'Unknown Artist',thumbnail:thumb}:null;}).filter(Boolean);const targetHost=window.location.origin;window.location.replace(targetHost+'/?import='+encodeURIComponent(JSON.stringify(list)));})();");
+    }
+  };
+
   return (
     <div style={{ position: "relative", zIndex: 10 }}>
       {/* Toast Notification Container */}
@@ -918,7 +925,7 @@ export default function ConverterClient() {
                               📥 Install Userscript (Chrome/Brave)
                             </a>
                             <a 
-                              href="javascript:(function(){const panel=document.querySelector('#items.playlist-panel-video-list')||document.querySelector('ytd-playlist-panel-renderer #items');const items=document.querySelectorAll('ytd-playlist-panel-video-renderer');if(!items||items.length===0){alert('BetterSync: No songs found on screen. Make sure you are on a YouTube watch/Mix page with the playlist queue panel visible!');return;}const list=Array.from(items).map(item=>{const titleText=item.querySelector('#video-title')?.innerText?.trim();const artistText=item.querySelector('#byline')?.innerText?.trim()||item.querySelector('#byline-container')?.innerText?.trim();const img=item.querySelector('img');const thumb=img?img.src:'';return titleText?{title:titleText,artist:artistText||'Unknown Artist',thumbnail:thumb}:null;}).filter(Boolean);const targetHost=window.location.origin;window.location.replace(targetHost+'/?import='+encodeURIComponent(JSON.stringify(list)));})();"
+                              ref={setBookmarkletHref}
                               className="btn btn-glow" 
                               style={{ 
                                 fontSize: "0.75rem", 
@@ -991,7 +998,7 @@ export default function ConverterClient() {
                             <strong>Option B (Bookmarklet - No Extensions!):</strong> Drag the button below to your Bookmarks Bar. When playing a YouTube Mix, click it to sync instantly:
                             <div style={{ marginTop: "0.25rem" }}>
                               <a 
-                                href="javascript:(function(){const panel=document.querySelector('#items.playlist-panel-video-list')||document.querySelector('ytd-playlist-panel-renderer #items');const items=document.querySelectorAll('ytd-playlist-panel-video-renderer');if(!items||items.length===0){alert('BetterSync: No songs found on screen. Make sure you are on a YouTube watch/Mix page with the playlist queue panel visible!');return;}const list=Array.from(items).map(item=>{const titleText=item.querySelector('#video-title')?.innerText?.trim();const artistText=item.querySelector('#byline')?.innerText?.trim()||item.querySelector('#byline-container')?.innerText?.trim();const img=item.querySelector('img');const thumb=img?img.src:'';return titleText?{title:titleText,artist:artistText||'Unknown Artist',thumbnail:thumb}:null;}).filter(Boolean);const targetHost=window.location.origin;window.location.replace(targetHost+'/?import='+encodeURIComponent(JSON.stringify(list)));})();"
+                                ref={setBookmarkletHref}
                                 className="btn btn-glow" 
                                 style={{ 
                                   fontSize: "0.75rem", 
