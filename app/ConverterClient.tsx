@@ -842,77 +842,106 @@ export default function ConverterClient() {
                         <div style={{ 
                           display: "flex", 
                           width: "300%", 
+                          minHeight: "270px",
                           transform: `translateX(-${(mixStep - 1) * 33.333}%)`, 
                           transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)" 
                         }}>
                           {/* Step 1: Enable Bookmarks Bar */}
-                          <div style={{ width: "33.333%", paddingRight: "1rem", flexShrink: 0 }}>
-                            <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Step 1: Show Bookmarks Bar</h4>
-                            <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem", fontSize: "0.85rem", lineHeight: 1.6 }}>
-                              Make sure your browser's Bookmarks Bar is visible at the top of your window. 
-                              If it's hidden, press <kbd style={{ background: "rgba(255,255,255,0.08)", padding: "0.15rem 0.35rem", borderRadius: "4px", fontSize: "0.75rem", fontFamily: "var(--font-mono)", border: "1px solid rgba(255,255,255,0.1)" }}>Ctrl+Shift+B</kbd> (Windows) or <kbd style={{ background: "rgba(255,255,255,0.08)", padding: "0.15rem 0.35rem", borderRadius: "4px", fontSize: "0.75rem", fontFamily: "var(--font-mono)", border: "1px solid rgba(255,255,255,0.1)" }}>Cmd+Shift+B</kbd> (Mac) to show it.
-                            </p>
-                            <button onClick={() => setMixStep(2)} className="btn btn-glow" style={{ width: "100%", justifyContent: "center" }}>
-                              Bookmarks Bar is Visible →
-                            </button>
+                          <div style={{ width: "33.333%", paddingRight: "1rem", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%" }}>
+                            <div>
+                              <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Step 1: Show Bookmarks Bar</h4>
+                              <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: 1.6 }}>
+                                Make sure your browser's Bookmarks Bar is visible at the top of your window. 
+                                If it's hidden, press <kbd style={{ background: "rgba(255,255,255,0.08)", padding: "0.15rem 0.35rem", borderRadius: "4px", fontSize: "0.75rem", fontFamily: "var(--font-mono)", border: "1px solid rgba(255,255,255,0.1)" }}>Ctrl+Shift+B</kbd> (Windows) or <kbd style={{ background: "rgba(255,255,255,0.08)", padding: "0.15rem 0.35rem", borderRadius: "4px", fontSize: "0.75rem", fontFamily: "var(--font-mono)", border: "1px solid rgba(255,255,255,0.1)" }}>Cmd+Shift+B</kbd> (Mac) to show it.
+                              </p>
+                            </div>
+                            <div style={{ marginTop: "1rem" }}>
+                              <button onClick={() => setMixStep(2)} className="btn btn-secondary" style={{ width: "100%", justifyContent: "center", border: "1px solid var(--accent-violet)", color: "var(--accent-violet)" }}>
+                                Bookmarks Bar is Visible →
+                              </button>
+                            </div>
                           </div>
 
                           {/* Step 2: Drag Bookmark */}
-                          <div style={{ width: "33.333%", paddingLeft: "0.5rem", paddingRight: "0.5rem", flexShrink: 0 }}>
-                            <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Step 2: Save Scraper Bookmark</h4>
-                            <p style={{ color: "var(--text-secondary)", marginBottom: "1rem", fontSize: "0.85rem", lineHeight: 1.6 }}>
-                              <strong>Drag and drop</strong> this purple button directly onto your Bookmarks Bar:
-                            </p>
-                            <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.5rem" }}>
-                              <a 
-                                ref={setBookmarkletHref}
-                                className="btn btn-glow" 
-                                style={{ 
-                                  fontSize: "0.75rem", 
-                                  padding: "0.5rem 1rem", 
-                                  display: "inline-flex", 
-                                  gap: "0.25rem", 
-                                  width: "auto", 
-                                  height: "auto",
-                                  border: "1px dashed var(--accent-violet)",
-                                  cursor: "grab"
-                                }}
-                                onClick={(e) => {
-                                  alert("Sync to BetterSync Bookmarklet:\n\nDrag this button directly to your browser's Bookmarks Bar.\n\nThen, when you are watching your YouTube Mix, click it in your bookmarks bar to sync the tracks!");
-                                }}
-                              >
-                                ⭐ Sync to BetterSync
-                              </a>
+                          <div style={{ width: "33.333%", paddingLeft: "0.5rem", paddingRight: "0.5rem", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%" }}>
+                            <div>
+                              <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Step 2: Save Scraper Bookmark</h4>
+                              <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: "1rem" }}>
+                                <strong>Drag and drop</strong> the purple button below directly onto your Bookmarks Bar:
+                              </p>
+                              <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.25rem" }}>
+                                <a 
+                                  ref={setBookmarkletHref}
+                                  className="btn btn-glow animate-pulse" 
+                                  style={{ 
+                                    fontSize: "0.85rem", 
+                                    padding: "0.6rem 1.25rem", 
+                                    display: "inline-flex", 
+                                    gap: "0.25rem", 
+                                    width: "auto", 
+                                    height: "auto",
+                                    border: "2px dashed var(--accent-violet)",
+                                    background: "rgba(139, 92, 246, 0.15)",
+                                    color: "#fff",
+                                    cursor: "grab",
+                                    boxShadow: "0 0 15px rgba(139, 92, 246, 0.4)"
+                                  }}
+                                  onClick={(e) => {
+                                    alert("Sync to BetterSync Bookmarklet:\n\nDrag this button directly to your browser's Bookmarks Bar.\n\nThen, when you are watching your YouTube Mix, click it in your bookmarks bar to sync the tracks!");
+                                  }}
+                                >
+                                  ⭐ Sync to BetterSync
+                                </a>
+                              </div>
                             </div>
-                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                            <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
                               <button onClick={() => setMixStep(1)} className="btn btn-secondary" style={{ flex: 1, justifyContent: "center" }}>
                                 ← Back
                               </button>
-                              <button onClick={() => setMixStep(3)} className="btn btn-glow" style={{ flex: 2, justifyContent: "center" }}>
+                              <button onClick={() => setMixStep(3)} className="btn btn-secondary" style={{ flex: 2, justifyContent: "center", border: "1px solid var(--accent-violet)", color: "var(--accent-violet)" }}>
                                 Saved Bookmark →
                               </button>
                             </div>
                           </div>
 
                           {/* Step 3 & 4: Launch and Sync */}
-                          <div style={{ width: "33.333%", paddingLeft: "1rem", flexShrink: 0 }}>
-                            <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Step 3 & 4: Launch and Sync Mix</h4>
-                            <p style={{ color: "var(--text-secondary)", marginBottom: "0.75rem", fontSize: "0.8rem", lineHeight: 1.5 }}>
-                              <strong>3. Launch YouTube Mix:</strong> Click below to open your Mix in a new YouTube browser tab:
-                            </p>
-                            <div style={{ marginBottom: "1rem" }}>
-                              <button 
-                                onClick={handleAutomateMixCapture}
-                                className="btn btn-secondary"
-                                style={{ width: "100%", justifyContent: "center", fontSize: "0.75rem", padding: "0.4rem 0.8rem", height: "auto" }}
-                              >
-                                ⚡ Open YouTube Mix
-                              </button>
+                          <div style={{ width: "33.333%", paddingLeft: "1rem", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%" }}>
+                            <div>
+                              <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Step 3 & 4: Launch & Run Scraper</h4>
+                              
+                              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                                {/* Sub-step 3 Visual card */}
+                                <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", padding: "0.5rem 0.75rem" }}>
+                                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "0.35rem", fontWeight: 600 }}>ACTION 3: OPEN YOUTUBE TAB</div>
+                                  <button 
+                                    onClick={handleAutomateMixCapture}
+                                    className="btn"
+                                    style={{ 
+                                      width: "100%", 
+                                      justifyContent: "center", 
+                                      fontSize: "0.8rem", 
+                                      padding: "0.45rem 1rem", 
+                                      height: "auto",
+                                      background: "linear-gradient(135deg, #FF0000 0%, #CC0000 100%)",
+                                      color: "white",
+                                      border: "none",
+                                      boxShadow: "0 0 10px rgba(255,0,0,0.2)"
+                                    }}
+                                  >
+                                    ⚡ Open YouTube Mix in New Tab
+                                  </button>
+                                </div>
+
+                                {/* Sub-step 4 Visual card */}
+                                <div style={{ background: "rgba(139, 92, 246, 0.08)", border: "1px solid rgba(139, 92, 246, 0.2)", borderRadius: "8px", padding: "0.5rem 0.75rem" }}>
+                                  <div style={{ fontSize: "0.7rem", color: "var(--accent-violet)", marginBottom: "0.25rem", fontWeight: 700 }}>🚨 ACTION 4 (IMPORTANT): RUN SCRAPER</div>
+                                  <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", margin: 0, lineHeight: 1.4 }}>
+                                    In the new YouTube tab, click the <strong>Sync to BetterSync</strong> bookmark on your browser Bookmarks Bar to sync tracks and open a new BetterSync tab automatically!
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                            <p style={{ color: "var(--text-secondary)", marginBottom: "1.25rem", fontSize: "0.8rem", lineHeight: 1.5 }}>
-                              <strong>4. Capture Tracks:</strong> In that new YouTube tab, click the <strong>Sync to BetterSync</strong> bookmark you saved. It will scroll the page to capture all tracks, and open **another new BetterSync tab** with your playlist loaded!
-                            </p>
-                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                            <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
                               <button onClick={() => setMixStep(2)} className="btn btn-secondary" style={{ flex: 1, justifyContent: "center" }}>
                                 ← Back
                               </button>
