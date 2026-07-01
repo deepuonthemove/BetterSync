@@ -838,11 +838,11 @@ export default function ConverterClient() {
                       </div>
 
                       {/* Stepper Content Slider */}
-                      <div style={{ overflow: "hidden", position: "relative", width: "100%" }}>
+                      <div style={{ overflow: "hidden", position: "relative", width: "100%", height: "270px" }}>
                         <div style={{ 
                           display: "flex", 
                           width: "300%", 
-                          minHeight: "270px",
+                          height: "100%",
                           transform: `translateX(-${(mixStep - 1) * 33.333}%)`, 
                           transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)" 
                         }}>
@@ -911,31 +911,35 @@ export default function ConverterClient() {
                               
                               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                                 {/* Sub-step 3 Visual card */}
-                                <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", padding: "0.5rem 0.75rem" }}>
-                                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "0.35rem", fontWeight: 600 }}>ACTION 3: OPEN YOUTUBE TAB</div>
-                                  <button 
-                                    onClick={handleAutomateMixCapture}
-                                    className="btn"
-                                    style={{ 
-                                      width: "100%", 
-                                      justifyContent: "center", 
-                                      fontSize: "0.8rem", 
-                                      padding: "0.45rem 1rem", 
-                                      height: "auto",
-                                      background: "linear-gradient(135deg, #FF0000 0%, #CC0000 100%)",
-                                      color: "white",
-                                      border: "none",
-                                      boxShadow: "0 0 10px rgba(255,0,0,0.2)"
-                                    }}
-                                  >
-                                    ⚡ Open YouTube Mix in New Tab
-                                  </button>
+                                <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", padding: "0.6rem 0.8rem" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div>
+                                      <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "0.2rem", fontWeight: 600 }}>ACTION 3: OPEN YOUTUBE TAB</div>
+                                      <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Launch target playlist Mix</div>
+                                    </div>
+                                    <button 
+                                      onClick={handleAutomateMixCapture}
+                                      className="btn"
+                                      style={{ 
+                                        fontSize: "0.8rem", 
+                                        padding: "0.45rem 1rem", 
+                                        height: "auto",
+                                        background: "linear-gradient(135deg, #FF0000 0%, #CC0000 100%)",
+                                        color: "white",
+                                        border: "none",
+                                        boxShadow: "0 0 10px rgba(255,0,0,0.2)",
+                                        flexShrink: 0
+                                      }}
+                                    >
+                                      ⚡ Open Mix
+                                    </button>
+                                  </div>
                                 </div>
 
                                 {/* Sub-step 4 Visual card */}
-                                <div style={{ background: "rgba(139, 92, 246, 0.08)", border: "1px solid rgba(139, 92, 246, 0.2)", borderRadius: "8px", padding: "0.5rem 0.75rem" }}>
-                                  <div style={{ fontSize: "0.7rem", color: "var(--accent-violet)", marginBottom: "0.25rem", fontWeight: 700 }}>🚨 ACTION 4 (IMPORTANT): RUN SCRAPER</div>
-                                  <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", margin: 0, lineHeight: 1.4 }}>
+                                <div style={{ background: "rgba(139, 92, 246, 0.08)", border: "1px solid rgba(139, 92, 246, 0.2)", borderRadius: "8px", padding: "0.6rem 0.8rem" }}>
+                                  <div style={{ fontSize: "0.78rem", color: "var(--accent-violet)", marginBottom: "0.25rem", fontWeight: 700 }}>🚨 ACTION 4 (IMPORTANT): RUN SCRAPER</div>
+                                  <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", margin: 0, lineHeight: 1.45 }}>
                                     In the new YouTube tab, click the <strong>Sync to BetterSync</strong> bookmark on your browser Bookmarks Bar to sync tracks and open a new BetterSync tab automatically!
                                   </p>
                                 </div>
