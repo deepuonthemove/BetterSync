@@ -96,6 +96,7 @@ export default function ConverterClient() {
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
   const [activePlaylistUrl, setActivePlaylistUrl] = useState<string | null>(null);
   const [showUpiModal, setShowUpiModal] = useState(false);
+  const [mixStep, setMixStep] = useState(1);
 
   // Toast Notification HUD State
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "info" }[]>([]);
@@ -779,21 +780,31 @@ export default function ConverterClient() {
                       className="form-input"
                       disabled={isScanning || isConverting}
                     />
-                    <button 
-                      onClick={handleScanPlaylist}
-                      disabled={isScanning || isConverting || url.includes("list=RD") || url.includes("list=LM")}
-                      className="btn btn-glow"
-                      style={{ flexShrink: 0 }}
-                    >
-                      {isScanning ? (
-                        <>
-                          <Loader2 size={16} className="loading-spinner" />
-                          Scanning...
-                        </>
-                      ) : (
-                        "Scan Playlist"
-                      )}
-                    </button>
+                    {(url.includes("list=RD") || url.includes("list=LM")) ? (
+                      <button 
+                        disabled
+                        className="btn btn-secondary"
+                        style={{ flexShrink: 0, opacity: 0.7, cursor: "not-allowed", border: "1px solid var(--border-color)" }}
+                      >
+                        Follow instructions below
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handleScanPlaylist}
+                        disabled={isScanning || isConverting}
+                        className="btn btn-glow"
+                        style={{ flexShrink: 0 }}
+                      >
+                        {isScanning ? (
+                          <>
+                            <Loader2 size={16} className="loading-spinner" />
+                            Scanning...
+                          </>
+                        ) : (
+                          "Scan Playlist"
+                        )}
+                      </button>
+                    )}
                   </div>
                   
                   {/* Presets - Only show when url is empty */}
@@ -806,33 +817,59 @@ export default function ConverterClient() {
                     </div>
                   )}
 
-                  {/* 4-Step Mix Automation Guide */}
+                  {/* Interactive Slider-stepper for Mix automation */}
                   {(url.includes("list=RD") || url.includes("list=LM")) && (
-                    <div style={{ marginTop: "1.25rem", fontSize: "0.85rem", color: "var(--text-secondary)", background: "rgba(139, 92, 246, 0.05)", padding: "1.25rem", borderRadius: "12px", border: "1px solid rgba(139, 92, 246, 0.25)", lineHeight: 1.6 }}>
-                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.75rem", color: "var(--accent-violet)", fontWeight: 700, fontSize: "0.95rem" }}>
-                        <span>⚡</span>
-                        <span>How to Transfer a YouTube Mix (4 Simple Steps)</span>
-                      </div>
+                    <div style={{ marginTop: "1.25rem", fontSize: "0.85rem", color: "var(--text-secondary)", background: "rgba(139, 92, 246, 0.05)", padding: "1.5rem", borderRadius: "12px", border: "1px solid rgba(139, 92, 246, 0.2)", lineHeight: 1.5, overflow: "hidden" }}>
                       
-                      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                        <div style={{ display: "flex", gap: "0.75rem" }}>
-                          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "50%", background: "var(--accent-violet)", color: "white", fontWeight: 700, fontSize: "0.8rem", flexShrink: 0 }}>1</span>
-                          <div>
-                            <strong>Show Bookmarks Bar:</strong> Make sure your browser's Bookmarks Bar is visible. Press <code>Ctrl+Shift+B</code> (Windows) or <code>Cmd+Shift+B</code> (Mac) to show it.
-                          </div>
+                      {/* Stepper Progress Bar */}
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1.5rem", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "1rem" }}>
+                        <div style={{ flex: 1, textAlign: "center", color: mixStep === 1 ? "var(--accent-violet)" : "var(--text-muted)", transition: "var(--transition-smooth)" }}>
+                          <div style={{ fontSize: "0.75rem", fontWeight: mixStep === 1 ? 700 : 400 }}>1. Bookmarks Bar</div>
+                          <div style={{ height: "3px", background: mixStep === 1 ? "var(--accent-violet)" : "rgba(255,255,255,0.05)", borderRadius: "2px", marginTop: "0.5rem", transition: "var(--transition-smooth)" }} />
                         </div>
+                        <div style={{ flex: 1, textAlign: "center", color: mixStep === 2 ? "var(--accent-violet)" : "var(--text-muted)", transition: "var(--transition-smooth)" }}>
+                          <div style={{ fontSize: "0.75rem", fontWeight: mixStep === 2 ? 700 : 400 }}>2. Save Bookmark</div>
+                          <div style={{ height: "3px", background: mixStep === 2 ? "var(--accent-violet)" : "rgba(255,255,255,0.05)", borderRadius: "2px", marginTop: "0.5rem", transition: "var(--transition-smooth)" }} />
+                        </div>
+                        <div style={{ flex: 1, textAlign: "center", color: mixStep === 3 ? "var(--accent-violet)" : "var(--text-muted)", transition: "var(--transition-smooth)" }}>
+                          <div style={{ fontSize: "0.75rem", fontWeight: mixStep === 3 ? 700 : 400 }}>3 & 4. Launch & Sync</div>
+                          <div style={{ height: "3px", background: mixStep === 3 ? "var(--accent-violet)" : "rgba(255,255,255,0.05)", borderRadius: "2px", marginTop: "0.5rem", transition: "var(--transition-smooth)" }} />
+                        </div>
+                      </div>
 
-                        <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
-                          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "50%", background: "var(--accent-violet)", color: "white", fontWeight: 700, fontSize: "0.8rem", flexShrink: 0, marginTop: "0.15rem" }}>2</span>
-                          <div>
-                            <strong>Save Scraper Bookmark:</strong> Drag the purple button below and drop it onto your browser Bookmarks Bar.
-                            <div style={{ marginTop: "0.5rem" }}>
+                      {/* Stepper Content Slider */}
+                      <div style={{ overflow: "hidden", position: "relative", width: "100%" }}>
+                        <div style={{ 
+                          display: "flex", 
+                          width: "300%", 
+                          transform: `translateX(-${(mixStep - 1) * 33.333}%)`, 
+                          transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)" 
+                        }}>
+                          {/* Step 1: Enable Bookmarks Bar */}
+                          <div style={{ width: "33.333%", paddingRight: "1rem", flexShrink: 0 }}>
+                            <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Step 1: Show Bookmarks Bar</h4>
+                            <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem", fontSize: "0.85rem", lineHeight: 1.6 }}>
+                              Make sure your browser's Bookmarks Bar is visible at the top of your window. 
+                              If it's hidden, press <kbd style={{ background: "rgba(255,255,255,0.08)", padding: "0.15rem 0.35rem", borderRadius: "4px", fontSize: "0.75rem", fontFamily: "var(--font-mono)", border: "1px solid rgba(255,255,255,0.1)" }}>Ctrl+Shift+B</kbd> (Windows) or <kbd style={{ background: "rgba(255,255,255,0.08)", padding: "0.15rem 0.35rem", borderRadius: "4px", fontSize: "0.75rem", fontFamily: "var(--font-mono)", border: "1px solid rgba(255,255,255,0.1)" }}>Cmd+Shift+B</kbd> (Mac) to show it.
+                            </p>
+                            <button onClick={() => setMixStep(2)} className="btn btn-glow" style={{ width: "100%", justifyContent: "center" }}>
+                              Bookmarks Bar is Visible →
+                            </button>
+                          </div>
+
+                          {/* Step 2: Drag Bookmark */}
+                          <div style={{ width: "33.333%", paddingLeft: "0.5rem", paddingRight: "0.5rem", flexShrink: 0 }}>
+                            <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Step 2: Save Scraper Bookmark</h4>
+                            <p style={{ color: "var(--text-secondary)", marginBottom: "1rem", fontSize: "0.85rem", lineHeight: 1.6 }}>
+                              <strong>Drag and drop</strong> this purple button directly onto your Bookmarks Bar:
+                            </p>
+                            <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.5rem" }}>
                               <a 
                                 ref={setBookmarkletHref}
                                 className="btn btn-glow" 
                                 style={{ 
                                   fontSize: "0.75rem", 
-                                  padding: "0.4rem 0.8rem", 
+                                  padding: "0.5rem 1rem", 
                                   display: "inline-flex", 
                                   gap: "0.25rem", 
                                   width: "auto", 
@@ -847,32 +884,46 @@ export default function ConverterClient() {
                                 ⭐ Sync to BetterSync
                               </a>
                             </div>
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <button onClick={() => setMixStep(1)} className="btn btn-secondary" style={{ flex: 1, justifyContent: "center" }}>
+                                ← Back
+                              </button>
+                              <button onClick={() => setMixStep(3)} className="btn btn-glow" style={{ flex: 2, justifyContent: "center" }}>
+                                Saved Bookmark →
+                              </button>
+                            </div>
                           </div>
-                        </div>
 
-                        <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
-                          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "50%", background: "var(--accent-violet)", color: "white", fontWeight: 700, fontSize: "0.8rem", flexShrink: 0, marginTop: "0.15rem" }}>3</span>
-                          <div>
-                            <strong>Open YouTube Mix:</strong> Click the grey button below to open your Mix in a new YouTube browser tab.
-                            <div style={{ marginTop: "0.5rem" }}>
+                          {/* Step 3 & 4: Launch and Sync */}
+                          <div style={{ width: "33.333%", paddingLeft: "1rem", flexShrink: 0 }}>
+                            <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Step 3 & 4: Launch and Sync Mix</h4>
+                            <p style={{ color: "var(--text-secondary)", marginBottom: "0.75rem", fontSize: "0.8rem", lineHeight: 1.5 }}>
+                              <strong>3. Launch YouTube Mix:</strong> Click below to open your Mix in a new YouTube browser tab:
+                            </p>
+                            <div style={{ marginBottom: "1rem" }}>
                               <button 
                                 onClick={handleAutomateMixCapture}
                                 className="btn btn-secondary"
-                                style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem", height: "auto" }}
+                                style={{ width: "100%", justifyContent: "center", fontSize: "0.75rem", padding: "0.4rem 0.8rem", height: "auto" }}
                               >
-                                ⚡ Launch YouTube Mix
+                                ⚡ Open YouTube Mix
+                              </button>
+                            </div>
+                            <p style={{ color: "var(--text-secondary)", marginBottom: "1.25rem", fontSize: "0.8rem", lineHeight: 1.5 }}>
+                              <strong>4. Capture Tracks:</strong> In that new YouTube tab, click the <strong>Sync to BetterSync</strong> bookmark you saved. It will scroll the page to capture all tracks, and open **another new BetterSync tab** with your playlist loaded!
+                            </p>
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <button onClick={() => setMixStep(2)} className="btn btn-secondary" style={{ flex: 1, justifyContent: "center" }}>
+                                ← Back
+                              </button>
+                              <button onClick={() => setMixStep(1)} className="btn btn-secondary" style={{ flex: 1, justifyContent: "center" }}>
+                                Start Over
                               </button>
                             </div>
                           </div>
                         </div>
-
-                        <div style={{ display: "flex", gap: "0.75rem" }}>
-                          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "50%", background: "var(--accent-violet)", color: "white", fontWeight: 700, fontSize: "0.8rem", flexShrink: 0 }}>4</span>
-                          <div>
-                            <strong>Trigger Import:</strong> In the new YouTube tab that just opened, click the <strong>Sync to BetterSync</strong> bookmark on your Bookmarks Bar. The page will automatically scroll to read your tracks, and open <strong>another new BetterSync tab</strong> with your complete playlist loaded and ready to transfer!
-                          </div>
-                        </div>
                       </div>
+
                     </div>
                   )}
                 </div>
