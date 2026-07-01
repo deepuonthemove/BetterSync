@@ -137,6 +137,10 @@ export default function ConverterClient() {
   };
 
   useEffect(() => {
+    console.log("Sentry Client Config DSN Value:", process.env.NEXT_PUBLIC_SENTRY_DSN || "NOT_FOUND");
+  }, []);
+
+  useEffect(() => {
     if (session) {
       fetchConnectedAccounts();
     } else {
