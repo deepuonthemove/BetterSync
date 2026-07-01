@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import "@/sentry.server.config";
 import * as Sentry from "@sentry/nextjs";
 
 // Define TypeScript structures for our song items

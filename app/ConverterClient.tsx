@@ -1,5 +1,6 @@
 "use client";
 
+import "../sentry.client.config";
 import React, { useState, useEffect } from "react";
 import { 
   ArrowRight, 
